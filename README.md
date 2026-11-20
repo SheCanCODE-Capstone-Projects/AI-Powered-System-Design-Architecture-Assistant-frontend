@@ -1,70 +1,238 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# ArchPilot - Interactive System Design & Architecture Visualizer
+
+The **ArchPilot** is a React-based web application that empowers developers to model software system architectures, preview live auto-generated Mermaid.js diagrams, export vector graphics, and inspect AI-powered architectural review findings.
+
+This repository contains the client-side user interface and connects to the **ArchPilot Spring Boot REST API**.
+
+## Table of Contents
+
+- [Frontend Features](#frontend-features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Backend API Integration](#backend-api-integration)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation & Setup](#installation--setup)
+- [Available Scripts](#available-scripts)
+- [Contributing (Fork & Pull Request)](#contributing-fork--pull-request)
+- [Disclaimer](#disclaimer)
+
+---
+
+## Frontend Features
+
+### 1. System Design Workspace
+
+- **Project Dashboard:** View, search, and manage all saved system architecture projects.
+- **Project Creation Form:** Create new projects with a name, description, and detailed system requirements.
+- **Component & Connection Editor:** Interactive forms on the project detail page to add, edit, and delete architectural components (Frontend, Backend, Database, External API, etc.) and define directional connections between them.
+- **Authenticated Access:** Manages user login sessions and attaches authentication tokens to API requests.
+
+### 2. Automatic Diagram Generation (Mermaid.js)
+
+- **Live Diagram Preview:** Renders Mermaid syntax fetched from the backend into clean, interactive architecture diagrams.
+- **Real-Time Synchronization:** Automatically refreshes the diagram view whenever components or connections are added, modified, or removed.
+- **SVG Export:** One-click export functionality to download rendered architecture diagrams as scalable `.svg` files.
+
+### 3. AI-Powered Architecture Review UI
+
+- **On-Demand Analysis:** Trigger architecture evaluations via the "Review Architecture" action button with clear loading state indicators.
+- **Structured Finding Cards:** Displays AI and rule-based findings separated by severity badges (High, Medium, Low).
+- **Actionable Insights:** Each finding card clearly highlights the Affected Component, Problem, Explanation, and Recommended Fix.
+- **Built-in Safety Notice:** Displays a persistent disclaimer informing users that AI insights are advisory and do not replace formal security audits.
+
+---
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Framework | React 18+ (Create React App) |
+| Diagramming Engine | Mermaid.js (`mermaid`) |
+| HTTP Client | Axios / Native Fetch API |
+| Routing | React Router DOM |
+| Styling | CSS3 / Tailwind CSS |
+
+---
+
+## Project Structure
+
+```text
+frontend/
+├── public/                 # Static assets
+├── src/
+│   ├── api/                # Axios instances and API service modules
+│   ├── components/         # Reusable UI components
+│   │   ├── workspace/      # ComponentForm, ConnectionForm, ProjectCard
+│   │   ├── diagram/        # MermaidRenderer, ExportSvgButton
+│   │   └── review/         # ReviewButton, FindingCard, SeverityBadge
+│   ├── context/            # Authentication & global project state
+│   ├── pages/              # Dashboard, Login/Register, ProjectDetailPage
+│   ├── App.jsx             # Root component and route definitions
+│   └── main.jsx            # Application entry point
+├── .env.example            # Environment variable template
+├── package.json            # Dependencies and npm scripts
+└── README.md               # Project documentation
+```
+
+---
+
+## Backend API Integration
+
+This frontend communicates with the **ArchPilot** over REST.
+
+Ensure the backend server is running before testing full end-to-end workflows.
+
+### Key Consumed Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET / POST / PUT / DELETE | `/api/projects` | Project CRUD operations |
+| POST / PUT / DELETE | `/api/projects/:id/components` | Component management |
+| POST / DELETE | `/api/projects/:id/connections` | Relationship management |
+| GET | `/api/projects/:id/diagram` | Fetch generated Mermaid diagram definition |
+| POST / GET | `/api/projects/:id/reviews` | Trigger and retrieve AI review reports |
+
+### Example AI Review JSON Consumed by the UI
+
+```json
+{
+  "component": "Database",
+  "severity": "Medium",
+  "issue": "Possible performance bottleneck",
+  "explanation": "High traffic may overload the database.",
+  "recommendation": "Consider indexing and caching."
+}
+```
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+Ensure you have the following installed on your machine:
+
+- **Node.js** (v18.x or higher recommended)
+- **npm** (v9.x or higher)
+- Running instance of the **ArchPilot Backend API** (default: `http://localhost:8080`)
+
+### Installation & Setup
+
+#### 1. Clone the  Repository
+
+```bash
+git clone https://github.com/<your-username>/<frontend-repo-name>.git
+cd <frontend-repo-name>
+```
+
+#### 2. Install Dependencies
+
+Run the following command to install React, Mermaid, and all required packages:
+
+```bash
+npm install
+```
+
+If you are initializing core libraries manually:
+
+```bash
+npm install mermaid axios react-router-dom
+```
+
+#### 3. Configure Environment Variables
+
+Create a `.env` file in the root of the frontend project and point it to your backend API URL.
+
+```env
+REACT_APP_API_BASE_URL=http://localhost:8080/api
+```
+
+#### 4. Start the Development Server
+
+**Run this command:**
+
+```bash
+npm start
+```
+
+#### 5. Open in Your Browser
+
+Navigate to:
+
+- **Create React App:** http://localhost:3000
+
+---
 
 ## Available Scripts
 
-In the project directory, you can run:
+| Command | Description |
+|---------|-------------|
+| `npm start` | Starts the local development server with hot-reload |
+| `npm run build` | Bundles the React app into static files for production |
+| `npm run lint` | Runs ESLint to catch syntax and style issues |
+| `npm test` | Runs unit and component tests |
 
-### `npm start`
+> **Note:** Available commands depend on the scripts defined in `package.json`.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+---
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Contributing (Fork & Pull Request)
 
-### `npm test`
+Contributions to the UI/UX, diagram rendering, or frontend architecture are welcome!
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Follow these steps to contribute:
 
-### `npm run build`
+### 1. Fork the Repository
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Click the **Fork** button at the top-right corner of this GitHub repository to create your own copy.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 2. Clone Your Fork Locally
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+git clone https://github.com/<your-username>/<frontend-repo-name>.git
+cd <frontend-repo-name>
+```
 
-### `npm run eject`
+### 3. Connect the Upstream Repository
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+git remote add upstream https://github.com/<original-owner>/<frontend-repo-name>.git
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 4. Create a New Feature Branch
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+git checkout -b feature/your-ui-feature
+```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 5. Develop & Verify Your Changes
 
-## Learn More
+- Test component creation, Mermaid SVG exports, and AI review rendering locally.
+- Verify there are no build errors:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+```bash
+npm run build
+```
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 6. Commit and Push to Your Fork
 
-### Code Splitting
+```bash
+git add .
+git commit -m "feat: describe your frontend improvement"
+git push origin feature/your-ui-feature
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+### 7. Submit a Pull Request (PR)
 
-### Analyzing the Bundle Size
+1. Go to your forked repository on GitHub.
+2. Click **Compare & pull request**.
+3. Select the corresponding  branch from the original repository as the base branch.
+4. Include a clear description of your changes.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## Disclaimer
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+> **Note:** AI-generated architecture reviews displayed in this application are designed to assist developers during early system planning. They do not represent a formal security audit or guarantee production readiness.

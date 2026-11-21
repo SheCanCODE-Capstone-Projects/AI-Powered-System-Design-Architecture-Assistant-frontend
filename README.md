@@ -224,6 +224,17 @@ git commit -m "feat: describe your frontend improvement"
 git push origin feature/your-ui-feature
 ```
 
+Recommended commit prefixes:
+
+| Prefix | Purpose |
+|--------|---------|
+| `feat:` | New functionality |
+| `fix:` | Bug fix |
+| `refactor:` | Code restructuring |
+| `test:` | Adding or updating tests |
+| `docs:` | Documentation changes |
+| `chore:` | Maintenance and configuration |
+
 ### 7. Submit a Pull Request (PR)
 
 1. Go to your forked repository on GitHub.

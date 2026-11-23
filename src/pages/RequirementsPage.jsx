@@ -129,12 +129,11 @@ function RequirementsPage() {
           <p className="sidebar-label">DESIGN</p>
 
           <Link
-            to={`/projects/${projectId}/requirements`}
-            className="sidebar-link active"
-            aria-current="page"
+            to={`/projects/${projectId}/architecture`}
+            className="sidebar-link"
           >
-            <span>⌘</span>
-            Requirements
+            <span>◇</span>
+            Architecture Designer
           </Link>
 
           <div className="sidebar-link disabled-link">
@@ -411,9 +410,18 @@ function RequirementsPage() {
                   )}
                 </div>
 
-                <button type="submit" className="requirements-save-btn">
-                  Save Requirements <span>→</span>
-                </button>
+                <div className="requirements-action-buttons">
+                  <button type="submit" className="requirements-save-btn">
+                    Save Requirements <span>→</span>
+                  </button>
+
+                  <Link
+                    to={`/projects/${projectId}/architecture`}
+                    className="requirements-architecture-btn"
+                  >
+                    Open Architecture Workspace →
+                  </Link>
+                </div>
               </div>
             </form>
           </div>

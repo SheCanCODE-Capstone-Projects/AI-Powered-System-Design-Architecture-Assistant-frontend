@@ -139,11 +139,17 @@ function DashboardPage() {
             Requirements
           </a>
 
-          <div className="sidebar-link disabled-link">
+          <Link
+            to={
+              projects.length > 0
+                ? `/projects/${projects[0].id}/architecture`
+                : "/dashboard"
+            }
+            className="sidebar-link"
+          >
             <span>◇</span>
             Architecture Designer
-            <small>Coming soon</small>
-          </div>
+          </Link>
         </div>
 
         <div className="sidebar-bottom">

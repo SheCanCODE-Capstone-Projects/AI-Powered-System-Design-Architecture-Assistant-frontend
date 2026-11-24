@@ -1,42 +1,36 @@
-
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "./App.css";
 
-import WorkspaceLayout from "./components/workspace/WorkspaceLayout";
+import EntryPage from "./pages/EntryPage";
+import DashboardPage from "./pages/DashboardPage";
+import RequirementsPage from "./pages/RequirementsPage";
+import ArchitecturePage from "./pages/ArchitecturePage";
 import ArchitectureReview from "./pages/ArchitectureReview";
-
-function Dashboard() {
-  return (
-    <div>
-      <h1>Dashboard</h1>
-      <p>Welcome to your ArchPilot workspace.</p>
-    </div>
-  );
-}
-
-function Projects() {
-  return <h1>Projects</h1>;
-}
-
-function ArchitectureDesigner() {
-  return <h1>Architecture Designer</h1>;
-}
-
-function Settings() {
-  return <h1>Settings</h1>;
-}
 
 function App() {
   return (
     <BrowserRouter>
-      <WorkspaceLayout>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/workspace" element={<ArchitectureDesigner />} />
-          <Route path="/architecture-review" element={<ArchitectureReview />} />
-          <Route path="/settings" element={<Settings />} />
-        </Routes>
-      </WorkspaceLayout>
+      <Routes>
+        <Route path="/" element={<EntryPage />} />
+
+        <Route path="/dashboard" element={<DashboardPage />} />
+
+        <Route
+          path="/projects/:projectId/requirements"
+          element={<RequirementsPage />}
+        />
+
+        <Route
+          path="/projects/:projectId/architecture"
+          element={<ArchitecturePage />}
+        />
+
+        {/* AI-Powered Architecture Review */}
+        <Route
+         path="/projects/:projectId/architecture/review"
+         element={<ArchitectureReview />}
+        />
+      </Routes>
     </BrowserRouter>
   );
 }

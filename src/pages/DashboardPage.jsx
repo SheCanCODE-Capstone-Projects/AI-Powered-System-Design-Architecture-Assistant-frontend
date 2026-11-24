@@ -1,62 +1,93 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
+function getArchitectureData() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem("archpilot-architectures") || "{}",
+    );
+
+    return Object.values(saved).reduce(
+      (totals, architecture) => ({
+        components:
+          totals.components +
+          (Array.isArray(architecture?.nodes) ? architecture.nodes.length : 0),
+        connections:
+          totals.connections +
+          (Array.isArray(architecture?.edges) ? architecture.edges.length : 0),
+      }),
+      { components: 0, connections: 0 },
+    );
+  } catch {
+    return { components: 0, connections: 0 };
+  }
+}
+
 function DashboardPage() {
-  // Theme settings
   const [theme, setTheme] = useState(
     () => localStorage.getItem("archpilot-theme") || "dark",
   );
 
-  // Project data
   const [projects, setProjects] = useState(() => {
     try {
-      const savedProjects = localStorage.getItem("archpilot-projects");
-      return savedProjects ? JSON.parse(savedProjects) : [];
+      const saved = JSON.parse(
+        localStorage.getItem("archpilot-projects") || "[]",
+      );
+      return Array.isArray(saved) ? saved : [];
     } catch {
       return [];
     }
   });
 
-  // Project form visibility
+  const [architecture, setArchitecture] = useState(getArchitectureData);
+  const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [error, setError] = useState("");
 
-  // Form values
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     scale: "Small - Startup / MVP",
   });
 
-  const [error, setError] = useState("");
-
-  // Save theme preference
   useEffect(() => {
     localStorage.setItem("archpilot-theme", theme);
   }, [theme]);
 
-  // Save projects
   useEffect(() => {
     localStorage.setItem("archpilot-projects", JSON.stringify(projects));
   }, [projects]);
 
-  // Switch between light and dark themes
+  // Refresh architecture totals when the user returns to the dashboard.
+  useEffect(() => {
+    const refreshArchitecture = () => {
+      setArchitecture(getArchitectureData());
+    };
+
+    window.addEventListener("focus", refreshArchitecture);
+    window.addEventListener("storage", refreshArchitecture);
+
+    return () => {
+      window.removeEventListener("focus", refreshArchitecture);
+      window.removeEventListener("storage", refreshArchitecture);
+    };
+  }, []);
+
   const toggleTheme = () => {
-    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
 
-  // Handle form input changes
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData((previousData) => ({
-      ...previousData,
+    setFormData((previous) => ({
+      ...previous,
       [name]: value,
     }));
 
     setError("");
   };
 
-  // Create a project
   const handleCreateProject = (event) => {
     event.preventDefault();
 
@@ -85,7 +116,7 @@ function DashboardPage() {
       updatedAt: new Date().toISOString(),
     };
 
-    setProjects((previousProjects) => [newProject, ...previousProjects]);
+    setProjects((previous) => [newProject, ...previous]);
 
     setFormData({
       name: "",
@@ -97,27 +128,42 @@ function DashboardPage() {
     setError("");
   };
 
-  // Close project form
   const closeForm = () => {
     setShowForm(false);
     setError("");
   };
 
-  // Count projects with functional requirements entered
   const completedRequirements = projects.filter((project) =>
     project.requirements?.functional?.trim(),
   ).length;
 
+  const progress =
+    projects.length > 0
+      ? Math.round((completedRequirements / projects.length) * 100)
+      : 0;
+
+  const filteredProjects = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    if (!query) return projects;
+
+    return projects.filter(
+      (project) =>
+        project.name?.toLowerCase().includes(query) ||
+        project.description?.toLowerCase().includes(query),
+    );
+  }, [projects, search]);
+
   return (
-    <main className="dashboard-layout" data-theme={theme}>
+    <main className="dashboard-layout reference-dashboard" data-theme={theme}>
       {/* Sidebar */}
-      <aside className="dashboard-sidebar">
-        <div className="dashboard-logo">
+      <aside className="dashboard-sidebar reference-sidebar">
+        <Link to="/dashboard" className="dashboard-logo">
           <span className="logo-icon">A</span>
           <span>ArchPilot</span>
-        </div>
+        </Link>
 
-        <div className="sidebar-section">
+        <div className="reference-sidebar-section">
           <p className="sidebar-label">WORKSPACE</p>
 
           <a href="#overview" className="sidebar-link active">
@@ -131,31 +177,37 @@ function DashboardPage() {
           </a>
         </div>
 
-        <div className="sidebar-section">
+        <div className="reference-sidebar-section">
           <p className="sidebar-label">DESIGN</p>
-
-          <a href="#projects" className="sidebar-link">
-            <span>⌘</span>
-            Requirements
-          </a>
 
           <Link
             to={
-              projects.length > 0
+              projects.length
+                ? `/projects/${projects[0].id}/requirements`
+                : "/dashboard"
+            }
+            className="sidebar-link"
+          >
+            <span>⌘</span>
+            Requirements
+          </Link>
+
+          <Link
+            to={
+              projects.length
                 ? `/projects/${projects[0].id}/architecture`
                 : "/dashboard"
             }
             className="sidebar-link"
           >
             <span>◇</span>
-            Architecture Designer
+            Architecture
           </Link>
         </div>
 
         <div className="sidebar-bottom">
           <div className="sidebar-user">
             <div className="user-avatar">U</div>
-
             <div>
               <strong>Workspace User</strong>
               <span>Personal workspace</span>
@@ -165,19 +217,26 @@ function DashboardPage() {
       </aside>
 
       {/* Main dashboard */}
-      <section className="dashboard-main">
-        <header className="dashboard-header">
-          <div>
-            <p className="dashboard-breadcrumb">Workspace / Overview</p>
-
-            <h1>System Design Workspace</h1>
-
-            <p className="dashboard-subtitle">
-              Design, organize and manage your software architectures.
-            </p>
+      <section className="dashboard-main reference-main">
+        {/* Top navigation */}
+        <header className="reference-topbar">
+          <div className="reference-page-title">
+            <p className="dashboard-breadcrumb">WORKSPACE / OVERVIEW</p>
+            <h1>Dashboard</h1>
           </div>
 
-          <div className="dashboard-header-actions">
+          <div className="reference-topbar-actions">
+            <label className="reference-search">
+              <span>⌕</span>
+              <input
+                type="search"
+                placeholder="Search your projects..."
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                aria-label="Search projects"
+              />
+            </label>
+
             <button
               type="button"
               className="theme-toggle"
@@ -201,100 +260,177 @@ function DashboardPage() {
               className="create-project-btn"
               onClick={() => setShowForm(true)}
             >
-              + Create Project
+              + New Project
             </button>
           </div>
         </header>
 
-        {/* Statistics */}
-        <section className="dashboard-stats" id="overview">
-          <article className="stat-card">
-            <div className="stat-icon">▦</div>
-            <p>Total Projects</p>
-            <h2>{projects.length}</h2>
-            <span>Your architecture projects</span>
+        <div className="reference-welcome">
+          <div>
+            <h2>Your system design workspace</h2>
+            <p>
+              Organize projects, define requirements, and design architectures
+              in one place.
+            </p>
+          </div>
+          <span className="reference-welcome-mark">✦</span>
+        </div>
+
+        {/* Upper panels */}
+        <section className="reference-top-panels" id="overview">
+          {/* Project overview */}
+          <article className="reference-panel reference-project-overview">
+            <div className="reference-panel-heading">
+              <div>
+                <span className="reference-panel-icon">▦</span>
+                <div>
+                  <h3>Project Overview</h3>
+                  <p>Your workspace at a glance</p>
+                </div>
+              </div>
+              <span className="reference-period">ALL TIME</span>
+            </div>
+
+            <div className="reference-main-number">
+              {projects.length}
+              <span>total projects</span>
+            </div>
+
+            <div className="reference-metrics">
+              <div>
+                <strong>{completedRequirements}</strong>
+                <span>Requirements started</span>
+              </div>
+              <div>
+                <strong>{projects.length - completedRequirements}</strong>
+                <span>Not started</span>
+              </div>
+            </div>
+
+            <div className="reference-progress">
+              <div className="reference-progress-heading">
+                <span>Requirements progress</span>
+                <strong>{progress}%</strong>
+              </div>
+              <div className="workspace-progress-track">
+                <div
+                  className="workspace-progress-fill"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
           </article>
 
-          <article className="stat-card">
-            <div className="stat-icon">◇</div>
-            <p>Active Projects</p>
-            <h2>{projects.length}</h2>
-            <span>Projects in your workspace</span>
-          </article>
+          {/* Architecture overview */}
+          <article className="reference-panel reference-architecture-overview">
+            <div className="reference-panel-heading">
+              <div>
+                <span className="reference-panel-icon">◇</span>
+                <div>
+                  <h3>Architecture Overview</h3>
+                  <p>Your saved architecture designs</p>
+                </div>
+              </div>
+              <span className="reference-period">ALL PROJECTS</span>
+            </div>
 
-          <article className="stat-card">
-            <div className="stat-icon">↻</div>
-            <p>Requirements Started</p>
-            <h2>{completedRequirements}</h2>
-            <span>Projects with functional requirements</span>
+            <div className="reference-architecture-numbers">
+              <div>
+                <span>Components</span>
+                <strong>{architecture.components}</strong>
+              </div>
+              <div>
+                <span>Connections</span>
+                <strong>{architecture.connections}</strong>
+              </div>
+            </div>
+
+            <div className="reference-architecture-visual">
+              <div className="reference-architecture-node">
+                <span>▣</span>
+                <small>Frontend</small>
+              </div>
+              <div className="reference-architecture-line" />
+              <div className="reference-architecture-node">
+                <span>◇</span>
+                <small>Backend</small>
+              </div>
+              <div className="reference-architecture-line" />
+              <div className="reference-architecture-node">
+                <span>▤</span>
+                <small>Database</small>
+              </div>
+            </div>
+
+            <p className="reference-architecture-note">
+              A simplified illustration of a typical system architecture. Your
+              actual designs are saved in each project.
+            </p>
           </article>
         </section>
 
-        {/* Projects */}
-        <section className="projects-section" id="projects">
-          <div className="projects-heading">
-            <div>
-              <h2>Your Projects</h2>
-              <p>Create and manage your software architecture projects.</p>
-            </div>
-
-            <button
-              type="button"
-              className="text-create-btn"
-              onClick={() => setShowForm(true)}
-            >
-              + New Project
-            </button>
-          </div>
-
-          {projects.length === 0 ? (
-            <div className="empty-projects">
-              <div className="empty-project-icon">⌘</div>
-
-              <h3>Your workspace is ready</h3>
-
-              <p>
-                You haven't created any architecture projects yet. Start by
-                creating your first project.
-              </p>
+        {/* Lower panels */}
+        <section className="reference-bottom-panels">
+          {/* Recent projects */}
+          <article
+            className="reference-panel reference-recent-projects"
+            id="projects"
+          >
+            <div className="reference-panel-heading">
+              <div>
+                <span className="reference-panel-icon">◫</span>
+                <div>
+                  <h3>Recent Projects</h3>
+                  <p>Continue where you left off</p>
+                </div>
+              </div>
 
               <button
                 type="button"
-                className="create-project-btn"
+                className="reference-small-action"
                 onClick={() => setShowForm(true)}
               >
-                + Create your first project
+                + New
               </button>
-
-              <span className="empty-note">
-                Your architecture journey starts here.
-              </span>
             </div>
-          ) : (
-            <div className="projects-grid">
-              {projects.map((project) => {
-                const hasRequirements = Boolean(
-                  project.requirements?.functional?.trim(),
-                );
 
-                return (
-                  <article className="project-card" key={project.id}>
-                    <div className="project-card-top">
-                      <div className="project-icon">◇</div>
+            {filteredProjects.length === 0 ? (
+              <div className="reference-no-projects">
+                <span>⌘</span>
+                <h3>{search ? "No matching projects" : "No projects yet"}</h3>
+                <p>
+                  {search
+                    ? "Try another search term."
+                    : "Create your first project to get started."}
+                </p>
+                {!search && (
+                  <button
+                    type="button"
+                    className="create-project-btn"
+                    onClick={() => setShowForm(true)}
+                  >
+                    Create Project
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="reference-project-list">
+                {filteredProjects.slice(0, 5).map((project) => {
+                  const hasRequirements = Boolean(
+                    project.requirements?.functional?.trim(),
+                  );
 
-                      <span className="project-status">Active</span>
-                    </div>
+                  return (
+                    <div className="reference-project-row" key={project.id}>
+                      <div className="reference-project-symbol">◇</div>
 
-                    <h3>{project.name}</h3>
+                      <div className="reference-project-details">
+                        <strong>{project.name}</strong>
+                        <span>
+                          {project.scale} · Created {project.createdAt}
+                        </span>
+                      </div>
 
-                    <p>{project.description || "No description provided."}</p>
-
-                    <div className="project-card-details">
-                      <span>{project.scale}</span>
-                      <span>Created {project.createdAt}</span>
-                    </div>
-
-                    <div className="project-requirement-status">
                       <span
                         className={
                           hasRequirements
@@ -302,29 +438,83 @@ function DashboardPage() {
                             : "requirement-pending"
                         }
                       >
-                        {hasRequirements
-                          ? "✓ Requirements started"
-                          : "○ Requirements not started"}
+                        {hasRequirements ? "Started" : "Pending"}
                       </span>
-                    </div>
 
-                    <Link
-                      to={`/projects/${project.id}/requirements`}
-                      className="requirements-link"
-                    >
-                      {hasRequirements
-                        ? "Edit Requirements →"
-                        : "Define Requirements →"}
-                    </Link>
-                  </article>
-                );
-              })}
+                      <Link
+                        to={`/projects/${project.id}/requirements`}
+                        className="reference-open-link"
+                        aria-label={`Open ${project.name}`}
+                      >
+                        →
+                      </Link>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </article>
+
+          {/* Insights */}
+          <article className="reference-panel reference-insights">
+            <div className="reference-panel-heading">
+              <div>
+                <span className="reference-panel-icon">✦</span>
+                <div>
+                  <h3>Workspace Insights</h3>
+                  <p>Your design progress</p>
+                </div>
+              </div>
             </div>
-          )}
+
+            <div className="reference-insight-item">
+              <span className="reference-insight-dot" />
+              <span>Projects created</span>
+              <strong>{projects.length}</strong>
+            </div>
+
+            <div className="reference-insight-item">
+              <span className="reference-insight-dot" />
+              <span>Architecture components</span>
+              <strong>{architecture.components}</strong>
+            </div>
+
+            <div className="reference-insight-item">
+              <span className="reference-insight-dot" />
+              <span>Architecture connections</span>
+              <strong>{architecture.connections}</strong>
+            </div>
+
+            <div className="reference-insight-item">
+              <span className="reference-insight-dot" />
+              <span>Requirements started</span>
+              <strong>{completedRequirements}</strong>
+            </div>
+
+            <div className="reference-insight-tip">
+              <span>✦</span>
+              <div>
+                <strong>Design tip</strong>
+                <p>
+                  Define your system requirements first. They help guide your
+                  architecture decisions.
+                </p>
+              </div>
+            </div>
+
+            {projects.length > 0 && (
+              <Link
+                to={`/projects/${projects[0].id}/architecture`}
+                className="reference-insight-button"
+              >
+                Open Architecture Designer <span>→</span>
+              </Link>
+            )}
+          </article>
         </section>
       </section>
 
-      {/* Create Project Modal */}
+      {/* Create project modal */}
       {showForm && (
         <div className="modal-overlay" onClick={closeForm}>
           <section
@@ -337,9 +527,7 @@ function DashboardPage() {
             <div className="modal-heading">
               <div>
                 <p>NEW WORKSPACE PROJECT</p>
-
                 <h2 id="modal-title">Create a project</h2>
-
                 <span>Set up the basic information for your architecture.</span>
               </div>
 
@@ -356,7 +544,6 @@ function DashboardPage() {
             <form onSubmit={handleCreateProject}>
               <div className="form-group">
                 <label htmlFor="project-name">Project name</label>
-
                 <input
                   id="project-name"
                   name="name"
@@ -371,7 +558,6 @@ function DashboardPage() {
 
               <div className="form-group">
                 <label htmlFor="project-description">Description</label>
-
                 <textarea
                   id="project-description"
                   name="description"
@@ -385,7 +571,6 @@ function DashboardPage() {
 
               <div className="form-group">
                 <label htmlFor="project-scale">Target scale / context</label>
-
                 <select
                   id="project-scale"
                   name="scale"
@@ -413,7 +598,6 @@ function DashboardPage() {
                 >
                   Cancel
                 </button>
-
                 <button type="submit" className="create-project-btn">
                   Create Project
                 </button>

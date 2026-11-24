@@ -2595,3 +2595,1628 @@ select:focus-visible {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* =====================================================
+   ARCHPILOT — REDESIGNED DASHBOARD
+   Uses the existing light and dark theme variables
+===================================================== */
+
+.dashboard-redesign {
+  padding-top: 35px;
+}
+
+/* Header */
+
+.redesign-header {
+  padding-bottom: 30px;
+}
+
+.redesign-header .dashboard-breadcrumb span {
+  padding: 0 5px;
+  color: var(--accent);
+}
+
+.redesign-header .dashboard-header-actions {
+  gap: 14px;
+}
+
+/* Overview cards */
+
+.redesign-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 17px;
+  margin: 30px 0;
+}
+
+.redesign-stat-card {
+  min-width: 0;
+  padding: 21px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.redesign-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+}
+
+.redesign-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.redesign-stat-icon {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 10px;
+  font-size: 19px;
+}
+
+.redesign-stat-label {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.redesign-stat-card h2 {
+  margin-top: 21px;
+  font-family: "Manrope", sans-serif;
+  font-size: 29px;
+  font-weight: 800;
+}
+
+.redesign-stat-card > p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* Main dashboard columns */
+
+.dashboard-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(260px, 0.85fr);
+  align-items: start;
+  gap: 22px;
+}
+
+.redesign-projects-section,
+.workspace-overview {
+  min-width: 0;
+  padding: 23px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.redesign-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 23px;
+}
+
+.redesign-eyebrow {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--accent);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.redesign-section-heading h2 {
+  font-family: "Manrope", sans-serif;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.redesign-section-heading p {
+  margin-top: 7px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* Project list */
+
+.redesign-project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.redesign-project-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-width: 0;
+  padding: 17px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: var(--transition);
+}
+
+.redesign-project-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.redesign-project-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 10px;
+  font-size: 20px;
+}
+
+.redesign-project-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.redesign-project-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.redesign-project-title h3 {
+  min-width: 0;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.redesign-project-info > p {
+  margin-top: 7px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.redesign-project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 13px;
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.redesign-project-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 9px;
+  flex-shrink: 0;
+}
+
+.redesign-project-link {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.redesign-project-link span {
+  display: inline-block;
+  transition: transform var(--transition);
+}
+
+.redesign-project-link:hover span {
+  transform: translateX(4px);
+}
+
+.redesign-architecture-link {
+  color: var(--text-secondary);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.redesign-architecture-link:hover {
+  color: var(--accent);
+}
+
+/* Empty project state */
+
+.redesign-empty-state {
+  min-height: 300px;
+  padding: 30px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: var(--surface-secondary);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+}
+
+.redesign-empty-icon {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 17px;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 14px;
+  font-size: 25px;
+}
+
+.redesign-empty-state h3 {
+  font-family: "Manrope", sans-serif;
+  font-size: 17px;
+}
+
+.redesign-empty-state p {
+  max-width: 350px;
+  margin: 10px 0 20px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+/* Workspace overview */
+
+.workspace-overview {
+  display: flex;
+  flex-direction: column;
+}
+
+.workspace-overview .redesign-section-heading {
+  margin-bottom: 15px;
+}
+
+.workspace-insight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.workspace-insight-icon {
+  width: 37px;
+  height: 37px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 9px;
+  font-size: 17px;
+}
+
+.workspace-insight strong {
+  display: block;
+  font-size: 11px;
+}
+
+.workspace-insight p {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* Requirements progress */
+
+.workspace-progress {
+  padding: 19px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.workspace-progress-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.workspace-progress-heading strong {
+  font-size: 11px;
+}
+
+.workspace-progress-heading span {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.workspace-progress-track {
+  width: 100%;
+  height: 7px;
+  margin-top: 13px;
+  overflow: hidden;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.workspace-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width .35s ease;
+}
+
+.workspace-progress > p {
+  margin-top: 9px;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+/* Workspace tip */
+
+.workspace-tip {
+  display: flex;
+  gap: 11px;
+  padding: 15px;
+  margin-top: 17px;
+  background: var(--accent-light);
+  border-radius: 9px;
+}
+
+.workspace-tip > span {
+  color: var(--accent);
+  font-size: 17px;
+}
+
+.workspace-tip strong {
+  font-size: 11px;
+}
+
+.workspace-tip p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.workspace-quick-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 12px;
+  color: var(--accent);
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  transition: var(--transition);
+}
+
+.workspace-quick-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* =====================================================
+   REDESIGNED DASHBOARD RESPONSIVE
+===================================================== */
+
+@media (max-width: 1150px) {
+  .redesign-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-overview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 20px;
+  }
+
+  .workspace-overview > .redesign-section-heading {
+    grid-column: 1 / -1;
+  }
+
+  .workspace-tip,
+  .workspace-quick-link {
+    align-self: start;
+  }
+}
+
+@media (max-width: 750px) {
+  .dashboard-redesign {
+    padding-top: 25px;
+  }
+
+  .dashboard-content-grid {
+    gap: 17px;
+  }
+
+  .redesign-projects-section,
+  .workspace-overview {
+    padding: 18px;
+  }
+
+  .workspace-overview {
+    display: flex;
+  }
+}
+
+@media (max-width: 500px) {
+  .redesign-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .redesign-stat-card {
+    padding: 17px;
+  }
+
+  .redesign-stat-card h2 {
+    margin-top: 13px;
+  }
+
+  .redesign-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .redesign-project-card {
+    flex-wrap: wrap;
+  }
+
+  .redesign-project-actions {
+    width: 100%;
+    align-items: flex-start;
+    padding-left: 56px;
+  }
+
+  .redesign-project-meta {
+    flex-direction: column;
+  }
+}
+
+
+/* ==========================================
+   ARCHPILOT — REFERENCE-INSPIRED DASHBOARD
+========================================== */
+
+.reference-dashboard {
+  min-height: 100vh;
+}
+
+.reference-sidebar {
+  width: 225px;
+  flex: 0 0 225px;
+}
+
+.reference-sidebar .dashboard-logo {
+  margin-bottom: 42px;
+  text-decoration: none;
+}
+
+.reference-sidebar-section {
+  margin-bottom: 30px;
+}
+
+.reference-sidebar .sidebar-link {
+  margin-bottom: 7px;
+  border-radius: 9px;
+}
+
+.reference-main {
+  min-width: 0;
+  padding: 26px 30px 35px;
+}
+
+/* Top navigation */
+
+.reference-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.reference-page-title h1 {
+  margin-top: 5px;
+  font-family: "Manrope", sans-serif;
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.reference-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.reference-search {
+  width: min(290px, 28vw);
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 13px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 30px;
+}
+
+.reference-search span {
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+.reference-search input {
+  width: 100%;
+  min-width: 0;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  outline: none;
+  font: inherit;
+  font-size: 11px;
+}
+
+.reference-search input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Welcome strip */
+
+.reference-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 23px;
+  margin-bottom: 20px;
+  background: var(--accent-light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.reference-welcome h2 {
+  font-family: "Manrope", sans-serif;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.reference-welcome p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.reference-welcome-mark {
+  color: var(--accent);
+  font-size: 30px;
+}
+
+/* Dashboard panels */
+
+.reference-top-panels,
+.reference-bottom-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.reference-bottom-panels {
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 0.9fr);
+}
+
+.reference-panel {
+  min-width: 0;
+  padding: 21px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.reference-panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.reference-panel-heading > div {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.reference-panel-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 50%;
+  font-size: 17px;
+}
+
+.reference-panel-heading h3 {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.reference-panel-heading p {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.reference-period {
+  padding: 7px 10px;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+/* Project overview */
+
+.reference-main-number {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: "Manrope", sans-serif;
+  font-size: 37px;
+  font-weight: 800;
+}
+
+.reference-main-number span {
+  color: var(--text-secondary);
+  font-family: "DM Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.reference-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-top: 24px;
+  padding: 15px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.reference-metrics div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.reference-metrics strong {
+  font-size: 20px;
+}
+
+.reference-metrics span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.reference-progress {
+  margin-top: 17px;
+}
+
+.reference-progress-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 10px;
+}
+
+.reference-progress-heading span {
+  color: var(--text-secondary);
+}
+
+.reference-progress-heading strong {
+  color: var(--accent);
+}
+
+/* Architecture overview */
+
+.reference-architecture-numbers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.reference-architecture-numbers div {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.reference-architecture-numbers span {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.reference-architecture-numbers strong {
+  font-family: "Manrope", sans-serif;
+  font-size: 27px;
+}
+
+.reference-architecture-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 105px;
+  margin-top: 17px;
+  padding: 13px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.reference-architecture-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  min-width: 65px;
+  color: var(--accent);
+}
+
+.reference-architecture-node span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: var(--accent-light);
+  border-radius: 9px;
+  font-size: 17px;
+}
+
+.reference-architecture-node small {
+  color: var(--text-secondary);
+  font-size: 9px;
+}
+
+.reference-architecture-line {
+  width: 35px;
+  height: 2px;
+  background: var(--accent);
+  opacity: .55;
+}
+
+.reference-architecture-note {
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+/* Recent projects */
+
+.reference-small-action {
+  padding: 8px 13px;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.reference-project-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.reference-project-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.reference-project-row:last-child {
+  border-bottom: none;
+}
+
+.reference-project-symbol {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 10px;
+  font-size: 18px;
+}
+
+.reference-project-details {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.reference-project-details strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reference-project-details > span {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reference-project-row .requirement-complete,
+.reference-project-row .requirement-pending {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.reference-open-link {
+  color: var(--accent);
+  font-size: 20px;
+  text-decoration: none;
+}
+
+/* Empty projects */
+
+.reference-no-projects {
+  min-height: 235px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.reference-no-projects > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 13px;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 12px;
+  font-size: 22px;
+}
+
+.reference-no-projects h3 {
+  font-size: 14px;
+}
+
+.reference-no-projects p {
+  max-width: 270px;
+  margin: 8px 0 15px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+/* Insights panel */
+
+.reference-insight-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.reference-insight-dot {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.reference-insight-item > span:nth-child(2) {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.reference-insight-item strong {
+  font-size: 11px;
+}
+
+.reference-insight-tip {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  margin-top: 17px;
+  background: var(--accent-light);
+  border-radius: 9px;
+}
+
+.reference-insight-tip > span {
+  color: var(--accent);
+}
+
+.reference-insight-tip strong {
+  font-size: 10px;
+}
+
+.reference-insight-tip p {
+  margin-top: 5px;
+  color: var(--text-secondary);
+  font-size: 9px;
+  line-height: 1.7;
+}
+
+.reference-insight-button {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 12px;
+  color: white;
+  background: var(--accent);
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: background .2s ease;
+}
+
+.reference-insight-button:hover {
+  background: var(--accent-hover);
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+  .reference-sidebar {
+    width: 200px;
+    flex-basis: 200px;
+  }
+
+  .reference-main {
+    padding: 23px 20px;
+  }
+
+  .reference-top-panels,
+  .reference-bottom-panels {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 850px) {
+  .reference-topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .reference-topbar-actions {
+    width: 100%;
+  }
+
+  .reference-search {
+    flex: 1;
+    width: auto;
+  }
+
+  .reference-top-panels,
+  .reference-bottom-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .reference-main {
+    padding: 20px 14px;
+  }
+
+  .reference-welcome {
+    padding: 16px;
+  }
+
+  .reference-welcome h2 {
+    font-size: 14px;
+  }
+
+  .reference-topbar-actions {
+    flex-wrap: wrap;
+  }
+
+  .reference-search {
+    flex-basis: 100%;
+    order: 2;
+  }
+
+  .reference-panel {
+    padding: 16px;
+  }
+
+  .reference-project-row {
+    flex-wrap: wrap;
+  }
+
+  .reference-project-details {
+    flex-basis: calc(100% - 65px);
+  }
+
+  .reference-project-row .requirement-complete,
+  .reference-project-row .requirement-pending {
+    margin-left: 50px;
+  }
+}
+
+
+/* ==========================================
+   ARCHPILOT — REQUIREMENTS PAGE REDESIGN
+========================================== */
+
+.requirements-redesign {
+  min-height: 100vh;
+}
+
+.requirements-redesign .dashboard-logo {
+  text-decoration: none;
+}
+
+.requirements-redesign-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 27px;
+}
+
+.requirements-redesign-header h1 {
+  margin-top: 7px;
+  font-family: "Manrope", sans-serif;
+  font-size: 25px;
+  font-weight: 800;
+}
+
+.requirements-redesign-content {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Project summary */
+
+.requirements-project-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 23px;
+  margin-bottom: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.requirements-project-heading {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 0;
+}
+
+.requirements-project-icon {
+  width: 49px;
+  height: 49px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 13px;
+  font-size: 24px;
+}
+
+.requirements-small-label {
+  display: block;
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.requirements-project-heading h2 {
+  margin-top: 6px;
+  font-family: "Manrope", sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.requirements-project-heading p {
+  margin-top: 5px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.requirements-project-scale {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.requirements-project-scale > span {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .8px;
+}
+
+.requirements-project-scale strong {
+  max-width: 230px;
+  padding: 9px 12px;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 10px;
+  text-align: center;
+}
+
+/* Progress card */
+
+.requirements-progress-card {
+  padding: 23px;
+  margin-bottom: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.requirements-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.requirements-progress-top h2 {
+  margin-top: 7px;
+  font-family: "Manrope", sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.requirements-progress-top p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.requirements-progress-number {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.requirements-progress-number strong {
+  color: var(--accent);
+  font-family: "Manrope", sans-serif;
+  font-size: 27px;
+  font-weight: 800;
+}
+
+.requirements-progress-number span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.requirements-progress-track {
+  width: 100%;
+  height: 9px;
+  overflow: hidden;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.requirements-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width .3s ease;
+}
+
+.requirements-progress-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 9px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+/* Form sections */
+
+.requirements-redesign-form {
+  display: flex;
+  flex-direction: column;
+  gap: 19px;
+}
+
+.requirements-redesign-section {
+  padding: 25px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.requirements-redesign-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.requirements-redesign-number {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.requirements-redesign-heading h2 {
+  font-family: "Manrope", sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.requirements-redesign-heading p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* Fields */
+
+.requirements-redesign-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+
+.requirements-redesign-field label {
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.requirements-redesign-field textarea,
+.requirements-redesign-field select {
+  width: 100%;
+  min-width: 0;
+  padding: 13px 14px;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  outline: none;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.7;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.requirements-redesign-field textarea {
+  resize: vertical;
+}
+
+.requirements-redesign-field textarea::placeholder {
+  color: var(--text-muted);
+  opacity: .85;
+}
+
+.requirements-redesign-field textarea:focus,
+.requirements-redesign-field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.requirements-redesign-field small {
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.requirements-redesign-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+/* Functional requirement counter */
+
+.requirements-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.requirements-count {
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* Scalability recommendation */
+
+.requirements-scalability-card {
+  padding: 21px;
+  background: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.requirements-scalability-top {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.requirements-scalability-icon {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  background: var(--accent-light);
+  border-radius: 11px;
+  font-size: 22px;
+}
+
+.requirements-scalability-top h3 {
+  margin-top: 6px;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.requirements-scalability-card > p {
+  margin: 16px 0 21px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.8;
+}
+
+.requirements-scalability-field {
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+/* Save area */
+
+.requirements-redesign-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 23px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.requirements-save-hint,
+.requirements-success {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.requirements-save-hint {
+  color: var(--text-secondary);
+}
+
+.requirements-success {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.requirements-redesign-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 11px;
+}
+
+.requirements-save-btn,
+.requirements-architecture-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 17px;
+  border-radius: 9px;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+.requirements-save-btn {
+  color: #fff;
+  background: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.requirements-save-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+.requirements-architecture-btn {
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid var(--border);
+}
+
+.requirements-architecture-btn:hover {
+  border-color: var(--accent);
+}
+
+/* Responsive */
+
+@media (max-width: 750px) {
+  .requirements-redesign-header {
+    align-items: flex-start;
+  }
+
+  .requirements-redesign-section {
+    padding: 19px;
+  }
+
+  .requirements-redesign-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .requirements-redesign-buttons {
+    width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .requirements-redesign-header h1 {
+    font-size: 21px;
+  }
+
+  .requirements-project-banner {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .requirements-project-scale {
+    align-items: flex-start;
+  }
+
+  .requirements-progress-card {
+    padding: 18px;
+  }
+
+  .requirements-progress-top {
+    align-items: flex-start;
+  }
+
+  .requirements-redesign-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .requirements-redesign-section {
+    padding: 17px;
+  }
+
+  .requirements-redesign-heading h2 {
+    font-size: 14px;
+  }
+
+  .requirements-redesign-buttons {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .requirements-save-btn,
+  .requirements-architecture-btn {
+    width: 100%;
+  }
+}
+
+/* ==========================================
+   FIXED SIDEBAR BEHAVIOR — ALL WORKSPACE PAGES
+========================================== */
+
+.dashboard-layout {
+  align-items: flex-start;
+}
+
+.dashboard-sidebar {
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex-shrink: 0;
+}
+
+/* Keep the main content independently sized */
+.dashboard-main {
+  min-width: 0;
+}

@@ -1,5 +1,46 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+
+const scalabilityByScale = {
+  "Small - Startup / MVP": {
+    recommended: "Vertical scaling",
+    explanation:
+      "Start with a simple architecture and scale the server resources as your application grows. This keeps the initial infrastructure manageable.",
+  },
+  "Medium - Growing Business": {
+    recommended: "Horizontal scaling",
+    explanation:
+      "Prepare to add more application instances as the number of users increases. This helps your system handle growing demand.",
+  },
+  "Large - Enterprise": {
+    recommended: "Horizontal scaling with load balancing and caching",
+    explanation:
+      "Use multiple application instances, load balancing and caching to support high traffic and improve performance.",
+  },
+  "Global - High Traffic": {
+    recommended: "Distributed scaling with geographic distribution",
+    explanation:
+      "Plan for distributed services, geographic traffic distribution, load balancing and caching to serve users across regions.",
+  },
+};
+
+const defaultRequirements = {
+  functional: "",
+  expectedTraffic: "1,000 - 10,000 users",
+  latency: "Under 500 ms",
+  availability: "99.9%",
+  scalability: "",
+  security: "",
+  other: "",
+};
+
+const scalabilityOptions = [
+  "Vertical scaling",
+  "Horizontal scaling",
+  "Horizontal scaling with load balancing and caching",
+  "Distributed scaling with geographic distribution",
+  "Not yet decided",
+];
 
 function RequirementsPage() {
   const { projectId } = useParams();
@@ -9,24 +50,16 @@ function RequirementsPage() {
   );
 
   const [project, setProject] = useState(null);
+  const [requirements, setRequirements] = useState(defaultRequirements);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState("");
 
-  const [requirements, setRequirements] = useState({
-    functional: "",
-    expectedTraffic: "1,000 - 10,000 users",
-    latency: "Under 500 ms",
-    availability: "99.9%",
-    scalability: "Horizontal scaling",
-    security: "",
-    other: "",
-  });
+  // Get the recommendation for the selected project's scale.
+  const scalabilityRecommendation =
+    scalabilityByScale[project?.scale] ||
+    scalabilityByScale["Small - Startup / MVP"];
 
-  // Keep the selected theme synchronized with localStorage.
-  useEffect(() => {
-    localStorage.setItem("archpilot-theme", theme);
-  }, [theme]);
-
-  // Load project and its requirements.
+  // Load the selected project.
   useEffect(() => {
     try {
       const savedProjects = JSON.parse(
@@ -37,25 +70,48 @@ function RequirementsPage() {
         (item) => item.id === projectId,
       );
 
-      if (selectedProject) {
-        setProject(selectedProject);
-
-        if (selectedProject.requirements) {
-          setRequirements((previous) => ({
-            ...previous,
-            ...selectedProject.requirements,
-          }));
-        }
+      if (!selectedProject) {
+        setProject(null);
+        return;
       }
-    } catch (error) {
-      console.error("Unable to load project:", error);
+
+      setProject(selectedProject);
+
+      const existingRequirements = {
+        ...defaultRequirements,
+        ...(selectedProject.requirements || {}),
+      };
+
+      // Replace the old generic default with a scale-based recommendation.
+      // Preserve any other strategy the user has already selected.
+      if (
+        !existingRequirements.scalability ||
+        existingRequirements.scalability === "Horizontal scaling"
+      ) {
+        existingRequirements.scalability =
+          scalabilityByScale[selectedProject.scale]?.recommended ||
+          scalabilityByScale["Small - Startup / MVP"].recommended;
+      }
+
+      setRequirements(existingRequirements);
+      setSaved(false);
+      setError("");
+    } catch (loadError) {
+      console.error("Unable to load project:", loadError);
+      setError("Unable to load this project's requirements.");
     }
   }, [projectId]);
 
+  // Save theme preference.
+  useEffect(() => {
+    localStorage.setItem("archpilot-theme", theme);
+  }, [theme]);
+
   const toggleTheme = () => {
-    setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
+    setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
 
+  // Update form fields.
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -65,8 +121,29 @@ function RequirementsPage() {
     }));
 
     setSaved(false);
+    setError("");
   };
 
+  // Calculate completion using the seven requirement fields.
+  const completionItems = [
+    requirements.functional,
+    requirements.expectedTraffic,
+    requirements.latency,
+    requirements.availability,
+    requirements.scalability,
+    requirements.security,
+    requirements.other,
+  ];
+
+  const completedCount = completionItems.filter((value) =>
+    String(value || "").trim(),
+  ).length;
+
+  const completionPercentage = Math.round(
+    (completedCount / completionItems.length) * 100,
+  );
+
+  // Save requirements to the selected project.
   const handleSubmit = (event) => {
     event.preventDefault();
 
@@ -96,20 +173,28 @@ function RequirementsPage() {
       }));
 
       setSaved(true);
-    } catch (error) {
-      console.error("Unable to save requirements:", error);
+      setError("");
+    } catch (saveError) {
+      console.error("Unable to save requirements:", saveError);
       setSaved(false);
+      setError("Unable to save requirements. Please try again.");
     }
   };
 
+  const functionalCount = useMemo(
+    () =>
+      requirements.functional.split("\n").filter((line) => line.trim()).length,
+    [requirements.functional],
+  );
+
   return (
-    <main className="dashboard-layout" data-theme={theme}>
-      {/* SIDEBAR - SAME AS DASHBOARD */}
+    <main className="dashboard-layout requirements-redesign" data-theme={theme}>
+      {/* Sidebar */}
       <aside className="dashboard-sidebar">
-        <div className="dashboard-logo">
+        <Link to="/dashboard" className="dashboard-logo">
           <span className="logo-icon">A</span>
           <span>ArchPilot</span>
-        </div>
+        </Link>
 
         <div className="sidebar-section">
           <p className="sidebar-label">WORKSPACE</p>
@@ -129,18 +214,20 @@ function RequirementsPage() {
           <p className="sidebar-label">DESIGN</p>
 
           <Link
+            to={`/projects/${projectId}/requirements`}
+            className="sidebar-link active"
+          >
+            <span>⌘</span>
+            Requirements
+          </Link>
+
+          <Link
             to={`/projects/${projectId}/architecture`}
             className="sidebar-link"
           >
             <span>◇</span>
             Architecture Designer
           </Link>
-
-          <div className="sidebar-link disabled-link">
-            <span>◇</span>
-            Architecture Designer
-            <small>Coming soon</small>
-          </div>
         </div>
 
         <div className="sidebar-bottom">
@@ -155,10 +242,10 @@ function RequirementsPage() {
         </div>
       </aside>
 
-      {/* MAIN CONTENT */}
+      {/* Main content */}
       <section className="dashboard-main requirements-main">
-        {/* HEADER - SAME ALIGNMENT AS DASHBOARD */}
-        <header className="dashboard-header requirements-topbar">
+        {/* Header */}
+        <header className="requirements-redesign-header">
           <div>
             <p className="dashboard-breadcrumb">
               Workspace / Projects / Requirements
@@ -167,7 +254,7 @@ function RequirementsPage() {
             <h1>Project Requirements</h1>
 
             <p className="dashboard-subtitle">
-              Define the functional and technical needs of your system.
+              Define what your system should do and how well it should perform.
             </p>
           </div>
 
@@ -177,11 +264,6 @@ function RequirementsPage() {
               className="theme-toggle"
               onClick={toggleTheme}
               aria-label={
-                theme === "dark"
-                  ? "Switch to light mode"
-                  : "Switch to dark mode"
-              }
-              title={
                 theme === "dark"
                   ? "Switch to light mode"
                   : "Switch to dark mode"
@@ -208,30 +290,81 @@ function RequirementsPage() {
             </Link>
           </div>
         ) : (
-          <div className="requirements-content">
-            {/* PROJECT INFORMATION */}
-            <section className="requirements-project-info">
-              <div>
-                <span className="project-info-label">CURRENT PROJECT</span>
+          <div className="requirements-redesign-content">
+            {/* Project summary */}
+            <section className="requirements-project-banner">
+              <div className="requirements-project-heading">
+                <span className="requirements-project-icon">◇</span>
 
-                <h2>{project.name}</h2>
+                <div>
+                  <span className="requirements-small-label">
+                    CURRENT PROJECT
+                  </span>
 
-                <p>
-                  {project.description || "No project description provided."}
-                </p>
+                  <h2>{project.name}</h2>
+
+                  <p>
+                    {project.description || "No project description provided."}
+                  </p>
+                </div>
               </div>
 
-              {project.scale && (
-                <span className="project-scale-tag">{project.scale}</span>
-              )}
+              <div className="requirements-project-scale">
+                <span>PROJECT SCALE</span>
+                <strong>{project.scale}</strong>
+              </div>
             </section>
 
-            {/* REQUIREMENTS FORM */}
-            <form className="requirements-form" onSubmit={handleSubmit}>
-              {/* FUNCTIONAL REQUIREMENTS */}
-              <section className="requirements-section">
-                <div className="requirements-section-heading">
-                  <span className="requirements-number">01</span>
+            {/* Progress */}
+            <section className="requirements-progress-card">
+              <div className="requirements-progress-top">
+                <div>
+                  <span className="requirements-small-label">
+                    REQUIREMENTS CHECKLIST
+                  </span>
+                  <h2>Define your system requirements</h2>
+                  <p>
+                    Complete the sections below before moving to architecture
+                    design.
+                  </p>
+                </div>
+
+                <div className="requirements-progress-number">
+                  <strong>{completionPercentage}%</strong>
+                  <span>Completed</span>
+                </div>
+              </div>
+
+              <div
+                className="requirements-progress-track"
+                role="progressbar"
+                aria-label="Requirements completion"
+                aria-valuenow={completionPercentage}
+                aria-valuemin="0"
+                aria-valuemax="100"
+              >
+                <div
+                  className="requirements-progress-fill"
+                  style={{ width: `${completionPercentage}%` }}
+                />
+              </div>
+
+              <div className="requirements-progress-footer">
+                <span>
+                  {completedCount} of {completionItems.length} fields completed
+                </span>
+                <span>{completionPercentage}%</span>
+              </div>
+            </section>
+
+            <form
+              className="requirements-redesign-form"
+              onSubmit={handleSubmit}
+            >
+              {/* Functional requirements */}
+              <section className="requirements-redesign-section">
+                <div className="requirements-redesign-heading">
+                  <span className="requirements-redesign-number">01</span>
 
                   <div>
                     <h2>Functional Requirements</h2>
@@ -242,20 +375,26 @@ function RequirementsPage() {
                   </div>
                 </div>
 
-                <div className="requirement-field">
-                  <label htmlFor="functional">
-                    What should your system do?
-                    <span className="field-required"> *</span>
-                  </label>
+                <div className="requirements-redesign-field">
+                  <div className="requirements-label-row">
+                    <label htmlFor="functional">
+                      What should your system do?
+                      <span className="field-required"> *</span>
+                    </label>
+
+                    <span className="requirements-count">
+                      {functionalCount} requirements
+                    </span>
+                  </div>
 
                   <textarea
                     id="functional"
                     name="functional"
-                    rows="6"
+                    rows={7}
                     value={requirements.functional}
                     onChange={handleChange}
                     placeholder={
-                      "Enter one requirement per line, for example:\nUsers can create accounts and log in.\nUsers can search for products.\nUsers can make payments."
+                      "Enter one requirement per line:\n\nUsers can create accounts and log in.\nUsers can search for products.\nUsers can make payments."
                     }
                     required
                   />
@@ -266,21 +405,22 @@ function RequirementsPage() {
                 </div>
               </section>
 
-              {/* NON-FUNCTIONAL REQUIREMENTS */}
-              <section className="requirements-section">
-                <div className="requirements-section-heading">
-                  <span className="requirements-number">02</span>
+              {/* Performance */}
+              <section className="requirements-redesign-section">
+                <div className="requirements-redesign-heading">
+                  <span className="requirements-redesign-number">02</span>
 
                   <div>
-                    <h2>Non-Functional Requirements</h2>
+                    <h2>Performance Requirements</h2>
                     <p>
-                      Define how well your system should perform and operate.
+                      Define the traffic and response time your system should
+                      support.
                     </p>
                   </div>
                 </div>
 
-                <div className="requirements-fields-grid">
-                  <div className="requirement-field">
+                <div className="requirements-redesign-grid">
+                  <div className="requirements-redesign-field">
                     <label htmlFor="expectedTraffic">Expected Traffic</label>
 
                     <select
@@ -301,7 +441,7 @@ function RequirementsPage() {
                     </small>
                   </div>
 
-                  <div className="requirement-field">
+                  <div className="requirements-redesign-field">
                     <label htmlFor="latency">Latency Constraint</label>
 
                     <select
@@ -320,7 +460,7 @@ function RequirementsPage() {
                     <small>Maximum acceptable response time.</small>
                   </div>
 
-                  <div className="requirement-field">
+                  <div className="requirements-redesign-field">
                     <label htmlFor="availability">Availability Goal</label>
 
                     <select
@@ -337,9 +477,41 @@ function RequirementsPage() {
 
                     <small>Target system uptime.</small>
                   </div>
+                </div>
+              </section>
 
-                  <div className="requirement-field">
-                    <label htmlFor="scalability">Scalability Strategy</label>
+              {/* Scalability */}
+              <section className="requirements-redesign-section">
+                <div className="requirements-redesign-heading">
+                  <span className="requirements-redesign-number">03</span>
+
+                  <div>
+                    <h2>Scalability Strategy</h2>
+                    <p>
+                      Choose how your system should handle increasing numbers of
+                      users and requests.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="requirements-scalability-card">
+                  <div className="requirements-scalability-top">
+                    <span className="requirements-scalability-icon">↗</span>
+
+                    <div>
+                      <span className="requirements-small-label">
+                        RECOMMENDED FOR YOUR PROJECT
+                      </span>
+                      <h3>{scalabilityRecommendation.recommended}</h3>
+                    </div>
+                  </div>
+
+                  <p>{scalabilityRecommendation.explanation}</p>
+
+                  <div className="requirements-scalability-field requirements-redesign-field">
+                    <label htmlFor="scalability">
+                      Your scalability strategy
+                    </label>
 
                     <select
                       id="scalability"
@@ -347,25 +519,60 @@ function RequirementsPage() {
                       value={requirements.scalability}
                       onChange={handleChange}
                     >
-                      <option>Vertical scaling</option>
-                      <option>Horizontal scaling</option>
-                      <option>Both vertical and horizontal</option>
-                      <option>Not yet decided</option>
+                      {!scalabilityOptions.includes(
+                        requirements.scalability,
+                      ) && (
+                        <option value={requirements.scalability}>
+                          {requirements.scalability}
+                        </option>
+                      )}
+
+                      {[
+                        scalabilityRecommendation.recommended,
+                        ...scalabilityOptions.filter(
+                          (option) =>
+                            option !== scalabilityRecommendation.recommended,
+                        ),
+                      ].map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                          {option === scalabilityRecommendation.recommended
+                            ? " (Recommended)"
+                            : ""}
+                        </option>
+                      ))}
                     </select>
 
                     <small>
-                      How your system should handle increasing demand.
+                      This recommendation is based on the target scale selected
+                      when you created the project. You can override it at any
+                      time.
                     </small>
                   </div>
                 </div>
+              </section>
 
-                <div className="requirement-field">
+              {/* Security and additional requirements */}
+              <section className="requirements-redesign-section">
+                <div className="requirements-redesign-heading">
+                  <span className="requirements-redesign-number">04</span>
+
+                  <div>
+                    <h2>Security and Additional Constraints</h2>
+                    <p>
+                      Describe security expectations and any other important
+                      system limitations.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="requirements-redesign-field">
                   <label htmlFor="security">Security Expectations</label>
 
                   <textarea
                     id="security"
                     name="security"
-                    rows="4"
+                    rows={4}
                     value={requirements.security}
                     onChange={handleChange}
                     placeholder="For example: user authentication, role-based access, encrypted communication..."
@@ -376,16 +583,16 @@ function RequirementsPage() {
                   </small>
                 </div>
 
-                <div className="requirement-field">
+                <div className="requirements-redesign-field">
                   <label htmlFor="other">Other Constraints</label>
 
                   <textarea
                     id="other"
                     name="other"
-                    rows="4"
+                    rows={4}
                     value={requirements.other}
                     onChange={handleChange}
-                    placeholder="Add any other technical, business, budget or regulatory constraints..."
+                    placeholder="Add any technical, business, budget or regulatory constraints..."
                   />
 
                   <small>
@@ -395,31 +602,34 @@ function RequirementsPage() {
                 </div>
               </section>
 
-              {/* SAVE ACTIONS */}
-              <div className="requirements-actions">
-                <div className="requirements-save-info">
+              {/* Save and continue */}
+              <div className="requirements-redesign-actions">
+                <div>
                   {saved ? (
                     <p className="requirements-success" role="status">
                       ✓ Requirements saved successfully.
                     </p>
+                  ) : error ? (
+                    <p className="form-error" role="alert">
+                      {error}
+                    </p>
                   ) : (
                     <p className="requirements-save-hint">
-                      Make sure your requirements are accurate before
-                      continuing.
+                      Remember to save your changes before continuing.
                     </p>
                   )}
                 </div>
 
-                <div className="requirements-action-buttons">
+                <div className="requirements-redesign-buttons">
                   <button type="submit" className="requirements-save-btn">
-                    Save Requirements <span>→</span>
+                    Save Requirements →
                   </button>
 
                   <Link
                     to={`/projects/${projectId}/architecture`}
                     className="requirements-architecture-btn"
                   >
-                    Open Architecture Workspace →
+                    Architecture Workspace →
                   </Link>
                 </div>
               </div>

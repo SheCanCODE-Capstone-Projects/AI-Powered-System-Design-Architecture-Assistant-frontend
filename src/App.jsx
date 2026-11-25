@@ -5,6 +5,7 @@ import EntryPage from "./pages/EntryPage";
 import DashboardPage from "./pages/DashboardPage";
 import RequirementsPage from "./pages/RequirementsPage";
 import ArchitecturePage from "./pages/ArchitecturePage";
+import ArchitectureReview from "./pages/ArchitectureReview";
 
 function App() {
   return (
@@ -22,6 +23,12 @@ function App() {
         <Route
           path="/projects/:projectId/architecture"
           element={<ArchitecturePage />}
+        />
+
+        {/* AI-Powered Architecture Review */}
+        <Route
+         path="/projects/:projectId/architecture/review"
+         element={<ArchitectureReview />}
         />
       </Routes>
     </BrowserRouter>

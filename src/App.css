@@ -1741,29 +1741,55 @@ select:focus-visible {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  padding: 0 22px;
-  color: white;
-  background: var(--welcome-accent);
+  gap: 12px;
+  padding: 0 20px;
+  border: 1px solid transparent;
   border-radius: 10px;
-  box-shadow: 0 9px 24px rgba(112, 87, 217, .2);
   font-size: 13px;
   font-weight: 700;
+  cursor: pointer;
+  transition: all .25s ease;
+}
+.welcome-google-btn {
+  color: #292d40;
+  background: white;
+  border-color: #e4e6ee;
+  box-shadow: 0 7px 20px rgba(30, 35, 60, .07);
 }
 
-.welcome-start-btn span {
+.welcome-github-btn {
+  color: white;
+  background: var(--welcome-accent);
+  box-shadow: 0 9px 24px rgba(112, 87, 217, .2);
+}
+.auth-provider-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.github-icon {
+  width: 21px;
+  height: 21px;
+}
+.welcome-start-btn > span:last-child {
   font-size: 19px;
   transition: transform .25s ease;
 }
+.welcome-google-btn:hover {
+  color: #292d40;
+  background: #f8f8fc;
+  border-color: #d6d1ee;
+  transform: translateY(-3px);
+}
 
-.welcome-start-btn:hover {
+.welcome-github-btn:hover {
   color: white;
   background: var(--welcome-accent-hover);
   transform: translateY(-3px);
   box-shadow: 0 13px 28px rgba(112, 87, 217, .28);
 }
-
-.welcome-start-btn:hover span {
+.welcome-start-btn:hover > span:last-child {
   transform: translateX(5px);
 }
 

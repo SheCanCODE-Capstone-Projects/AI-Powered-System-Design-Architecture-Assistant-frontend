@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation } from "react-router-dom";
+
 import { MarkerType, useNodesState, useEdgesState } from "@xyflow/react";
+
 import ArchitectureCanvas from "../components/architecture/ArchitectureCanvas";
+
 import {
   getArchitecture,
   saveArchitecture,
@@ -45,14 +48,30 @@ const nodeStyle = {
 };
 
 // ========================================
-// INPUT VALIDATION
+// VALIDATION SETTINGS
 // ========================================
 
 const MAX_NODE_LABEL_LENGTH = 60;
 const MAX_EDGE_DESCRIPTION_LENGTH = 300;
+const MAX_NODES = 100;
+const MAX_EDGES = 200;
+
+const allowedCategories = componentGroups.map((group) => group.title);
+
+const allowedProtocols = ["REST", "GraphQL", "gRPC", "Async Events"];
+
+const allowedInteractions = ["Read", "Write", "Read / Write", "Event"];
+
+// ========================================
+// HELPER FUNCTIONS
+// ========================================
+
+function createId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 
 function sanitizeText(value, maxLength) {
-  return Array.from(String(value))
+  return Array.from(String(value ?? ""))
     .filter((char) => {
       const code = char.codePointAt(0);
       return code > 31 && code !== 127;
@@ -60,9 +79,107 @@ function sanitizeText(value, maxLength) {
     .join("")
     .slice(0, maxLength);
 }
-// ========================================
-// GET COMPONENT CATEGORY
-// ========================================
+
+function isValidPosition(position) {
+  return position && Number.isFinite(position.x) && Number.isFinite(position.y);
+}
+
+function validateArchitecture(nodes, edges) {
+  if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+    return "Invalid architecture data.";
+  }
+
+  if (nodes.length > MAX_NODES) {
+    return `Your architecture cannot contain more than ${MAX_NODES} components.`;
+  }
+
+  if (edges.length > MAX_EDGES) {
+    return `Your architecture cannot contain more than ${MAX_EDGES} connections.`;
+  }
+
+  const nodeIds = new Set();
+
+  for (const node of nodes) {
+    if (
+      !node ||
+      typeof node.id !== "string" ||
+      !node.id.trim() ||
+      nodeIds.has(node.id)
+    ) {
+      return "Every component must have a unique valid ID.";
+    }
+
+    nodeIds.add(node.id);
+
+    const label = sanitizeText(node.data?.label, MAX_NODE_LABEL_LENGTH);
+
+    if (!label.trim()) {
+      return "Every component must have a name before saving.";
+    }
+
+    if (!allowedCategories.includes(node.data?.category)) {
+      return `The category for component "${label}" is invalid.`;
+    }
+
+    if (!isValidPosition(node.position)) {
+      return `The position of component "${label}" is invalid.`;
+    }
+  }
+
+  const edgeIds = new Set();
+
+  for (const edge of edges) {
+    if (
+      !edge ||
+      typeof edge.id !== "string" ||
+      !edge.id.trim() ||
+      edgeIds.has(edge.id)
+    ) {
+      return "Every connection must have a unique valid ID.";
+    }
+
+    edgeIds.add(edge.id);
+
+    if (
+      typeof edge.source !== "string" ||
+      typeof edge.target !== "string" ||
+      !nodeIds.has(edge.source) ||
+      !nodeIds.has(edge.target)
+    ) {
+      return "A connection refers to a component that does not exist.";
+    }
+
+    if (edge.source === edge.target) {
+      return "A component cannot connect to itself.";
+    }
+
+    const protocol = edge.data?.protocol ?? "REST";
+    const interaction = edge.data?.interaction ?? "Read / Write";
+
+    if (!allowedProtocols.includes(protocol)) {
+      return "A connection contains an invalid protocol.";
+    }
+
+    if (!allowedInteractions.includes(interaction)) {
+      return "A connection contains an invalid interaction type.";
+    }
+
+    const description = edge.data?.description ?? "";
+
+    if (
+      typeof description !== "string" ||
+      description.length > MAX_EDGE_DESCRIPTION_LENGTH
+    ) {
+      return "A connection description is too long or invalid.";
+    }
+
+    if (edge.label != null && typeof edge.label !== "string") {
+      return "A connection label is invalid.";
+    }
+  }
+
+  return "";
+}
 
 function getCategory(label) {
   if (["Web Client", "Mobile Client"].includes(label)) {
@@ -100,52 +217,118 @@ function getCategory(label) {
 
 function ArchitecturePage() {
   const { projectId } = useParams();
+  const location = useLocation();
 
-  // Project state
+  // Use development links only while inside /dev routes.
+  const routePrefix = location.pathname.startsWith("/dev/") ? "/dev" : "";
+
+  // ========================================
+  // PROJECT STATE
+  // ========================================
+
   const [project, setProject] = useState(null);
   const [projectLoading, setProjectLoading] = useState(true);
 
-  // React Flow state
+  // ========================================
+  // REACT FLOW STATE
+  // ========================================
+
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-  // Selection state
+  // ========================================
+  // SELECTION STATE
+  // ========================================
+
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
 
-  // Save feedback
+  // ========================================
+  // FEEDBACK STATE
+  // ========================================
+
   const [saveMessage, setSaveMessage] = useState("");
 
   // ========================================
-  // LOAD PROJECT AND SAVED ARCHITECTURE
+  // LOAD PROJECT AND ARCHITECTURE
   // ========================================
 
   useEffect(() => {
-    try {
-      const savedProjects = JSON.parse(
-        localStorage.getItem("archpilot-projects") || "[]",
-      );
+    let isActive = true;
 
-      const selectedProject = savedProjects.find(
-        (item) => String(item.id) === String(projectId),
-      );
+    async function loadProject() {
+      setProjectLoading(true);
+      setProject(null);
+      setNodes([]);
+      setEdges([]);
+      setSaveMessage("");
+      setSelectedNodeId(null);
+      setSelectedEdgeId(null);
 
-      setProject(selectedProject || null);
+      try {
+        const savedProjects = JSON.parse(
+          localStorage.getItem("archpilot-projects") || "[]",
+        );
 
-      if (selectedProject) {
+        if (!Array.isArray(savedProjects)) {
+          throw new Error("Invalid saved project data.");
+        }
+
+        const selectedProject = savedProjects.find(
+          (item) => String(item.id) === String(projectId),
+        );
+
+        if (!isActive) return;
+
+        if (!selectedProject) {
+          setProject(null);
+          return;
+        }
+
+        setProject(selectedProject);
+
         const architecture = getArchitecture(projectId);
 
-        setNodes(architecture?.nodes || []);
-        setEdges(architecture?.edges || []);
+        const savedNodes = Array.isArray(architecture?.nodes)
+          ? architecture.nodes
+          : [];
+
+        const savedEdges = Array.isArray(architecture?.edges)
+          ? architecture.edges
+          : [];
+
+        const validationError = validateArchitecture(savedNodes, savedEdges);
+
+        if (validationError) {
+          setSaveMessage(
+            `Saved architecture could not be restored: ${validationError}`,
+          );
+          return;
+        }
+
+        setNodes(savedNodes);
+        setEdges(savedEdges);
+      } catch (error) {
+        console.error("Unable to load project:", error);
+
+        if (isActive) {
+          setProject(null);
+          setSaveMessage("Unable to load the project or its architecture.");
+        }
+      } finally {
+        if (isActive) {
+          setProjectLoading(false);
+        }
       }
-    } catch (error) {
-      console.error("Unable to load project:", error);
-      setProject(null);
-    } finally {
-      setProjectLoading(false);
     }
+
+    loadProject();
+
+    return () => {
+      isActive = false;
+    };
   }, [projectId, setNodes, setEdges]);
 
   // ========================================
@@ -153,23 +336,36 @@ function ArchitecturePage() {
   // ========================================
 
   function addComponent(label, category) {
+    if (nodes.length >= MAX_NODES) {
+      setSaveMessage(`You can add a maximum of ${MAX_NODES} components.`);
+      return;
+    }
+
+    if (!allowedCategories.includes(category)) {
+      setSaveMessage("Invalid component category.");
+      return;
+    }
+
+    const safeLabel = sanitizeText(label, MAX_NODE_LABEL_LENGTH);
+
+    if (!safeLabel.trim()) {
+      setSaveMessage("Component name cannot be empty.");
+      return;
+    }
+
     const index = nodes.length;
 
     const newNode = {
-      id: `node-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-
+      id: createId("node"),
       type: "default",
-
       position: {
         x: 100 + (index % 3) * 220,
         y: 100 + Math.floor(index / 3) * 150,
       },
-
       data: {
-        label,
+        label: safeLabel,
         category,
       },
-
       style: { ...nodeStyle },
     };
 
@@ -177,19 +373,45 @@ function ArchitecturePage() {
 
     setSelectedNodeId(newNode.id);
     setSelectedEdgeId(null);
+    setSaveMessage("");
   }
 
   // ========================================
-  // DRAG COMPONENT FROM PALETTE
+  // PALETTE DRAG AND DROP
   // ========================================
 
   function handlePaletteDragStart(event, label, category) {
+    const validCategory = allowedCategories.includes(category);
+
+    const safeLabel = sanitizeText(label, MAX_NODE_LABEL_LENGTH);
+
+    const validItem = componentGroups.some(
+      (group) => group.title === category && group.items.includes(safeLabel),
+    );
+
+    if (!validCategory || !validItem) {
+      event.preventDefault();
+      setSaveMessage("Invalid component.");
+      return;
+    }
+
     event.dataTransfer.setData(
       "application/archpilot",
-      JSON.stringify({ label, category }),
+      JSON.stringify({
+        label: safeLabel,
+        category,
+      }),
     );
 
     event.dataTransfer.effectAllowed = "move";
+  }
+
+  // ========================================
+  // CANVAS ERROR FEEDBACK
+  // ========================================
+
+  function handleCanvasError(message) {
+    setSaveMessage(message);
   }
 
   // ========================================
@@ -214,42 +436,12 @@ function ArchitecturePage() {
       requirementText.includes("10,000");
 
     const components = [
-      {
-        id: "web",
-        label: "Web Client",
-        x: 100,
-        y: 50,
-      },
-      {
-        id: "mobile",
-        label: "Mobile Client",
-        x: 450,
-        y: 50,
-      },
-      {
-        id: "gateway",
-        label: "API Gateway",
-        x: 275,
-        y: 180,
-      },
-      {
-        id: "auth",
-        label: "Auth Service",
-        x: 50,
-        y: 340,
-      },
-      {
-        id: "product",
-        label: "Product Service",
-        x: 275,
-        y: 340,
-      },
-      {
-        id: "order",
-        label: "Order Service",
-        x: 500,
-        y: 340,
-      },
+      { id: "web", label: "Web Client", x: 100, y: 50 },
+      { id: "mobile", label: "Mobile Client", x: 450, y: 50 },
+      { id: "gateway", label: "API Gateway", x: 275, y: 180 },
+      { id: "auth", label: "Auth Service", x: 50, y: 340 },
+      { id: "product", label: "Product Service", x: 275, y: 340 },
+      { id: "order", label: "Order Service", x: 500, y: 340 },
       {
         id: "database",
         label: "Relational Database",
@@ -304,61 +496,54 @@ function ArchitecturePage() {
     const generatedNodes = components.map((component) => ({
       id: component.id,
       type: "default",
-
       position: {
         x: component.x,
         y: component.y,
       },
-
       data: {
         label: component.label,
         category: getCategory(component.label),
       },
-
       style: { ...nodeStyle },
     }));
 
-    // Create directional connections
-    const createEdge = (
+    function createEdge(
       id,
       source,
       target,
       label = "REST API",
       protocol = "REST",
       interaction = "Read / Write",
-    ) => ({
-      id,
-      source,
-      target,
-      label,
-      type: "smoothstep",
-      animated: true,
-
-      markerEnd: {
-        type: MarkerType.ArrowClosed,
-        color: "var(--accent)",
-      },
-
-      data: {
-        protocol,
-        interaction,
-        description: "",
-      },
-
-      style: {
-        stroke: "var(--accent)",
-        strokeWidth: 2,
-      },
-
-      labelStyle: {
-        fill: "var(--text)",
-        fontSize: 11,
-      },
-
-      labelBgStyle: {
-        fill: "var(--surface)",
-      },
-    });
+    ) {
+      return {
+        id,
+        source,
+        target,
+        label,
+        type: "smoothstep",
+        animated: true,
+        markerEnd: {
+          type: MarkerType.ArrowClosed,
+          color: "#7865E8",
+        },
+        data: {
+          protocol,
+          interaction,
+          description: "",
+        },
+        style: {
+          stroke: "#7865E8",
+          strokeWidth: 2,
+        },
+        labelStyle: {
+          fill: "var(--text)",
+          fontSize: 11,
+        },
+        labelBgStyle: {
+          fill: "var(--surface)",
+        },
+      };
+    }
 
     const generatedEdges = [
       createEdge("e1", "web", "gateway", "HTTPS"),
@@ -366,7 +551,6 @@ function ArchitecturePage() {
       createEdge("e3", "gateway", "auth"),
       createEdge("e4", "gateway", "product"),
       createEdge("e5", "gateway", "order"),
-
       createEdge(
         "e6",
         "product",
@@ -375,7 +559,6 @@ function ArchitecturePage() {
         "REST",
         "Read / Write",
       ),
-
       createEdge(
         "e7",
         "order",
@@ -399,17 +582,33 @@ function ArchitecturePage() {
 
     if (hasNotifications) {
       generatedEdges.push(
-        createEdge("e11", "order", "broker", "Events", "Async Events"),
-
-        createEdge("e12", "broker", "worker", "Async events", "Async Events"),
+        createEdge("e11", "order", "broker", "Events", "Async Events", "Event"),
+        createEdge(
+          "e12",
+          "broker",
+          "worker",
+          "Async events",
+          "Async Events",
+          "Event",
+        ),
       );
+    }
+
+    const validationError = validateArchitecture(
+      generatedNodes,
+      generatedEdges,
+    );
+
+    if (validationError) {
+      setSaveMessage(validationError);
+      return;
     }
 
     setNodes(generatedNodes);
     setEdges(generatedEdges);
-
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
+    setSaveMessage("Architecture generated successfully.");
 
     requestAnimationFrame(() => {
       reactFlowInstance?.fitView({ padding: 0.2 });
@@ -417,17 +616,19 @@ function ArchitecturePage() {
   }
 
   // ========================================
-  // SELECT COMPONENTS AND CONNECTIONS
+  // SELECTION
   // ========================================
 
   function handleNodeClick(event, node) {
     setSelectedNodeId(node.id);
     setSelectedEdgeId(null);
+    setSaveMessage("");
   }
 
   function handleEdgeClick(event, edge) {
     setSelectedEdgeId(edge.id);
     setSelectedNodeId(null);
+    setSaveMessage("");
   }
 
   function clearSelection() {
@@ -440,24 +641,43 @@ function ArchitecturePage() {
   // ========================================
 
   function updateSelectedNode(field, value) {
-    const safeValue =
-      field === "label" ? sanitizeText(value, MAX_NODE_LABEL_LENGTH) : value;
+    if (!selectedNodeId) return;
 
-    setNodes((currentNodes) =>
-      currentNodes.map((node) => {
-        if (node.id !== selectedNodeId) {
-          return node;
-        }
+    if (field === "label") {
+      const safeValue = sanitizeText(value, MAX_NODE_LABEL_LENGTH);
 
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            [field]: safeValue,
-          },
-        };
-      }),
-    );
+      setNodes((currentNodes) =>
+        currentNodes.map((node) =>
+          node.id === selectedNodeId
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  label: safeValue,
+                },
+              }
+            : node,
+        ),
+      );
+    }
+
+    if (field === "category" && allowedCategories.includes(value)) {
+      setNodes((currentNodes) =>
+        currentNodes.map((node) =>
+          node.id === selectedNodeId
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  category: value,
+                },
+              }
+            : node,
+        ),
+      );
+    }
+
+    setSaveMessage("");
   }
 
   // ========================================
@@ -465,10 +685,21 @@ function ArchitecturePage() {
   // ========================================
 
   function updateSelectedEdge(field, value) {
-    const safeValue =
-      field === "description"
-        ? sanitizeText(value, MAX_EDGE_DESCRIPTION_LENGTH)
-        : value;
+    if (!selectedEdgeId) return;
+
+    let safeValue;
+
+    if (field === "protocol") {
+      if (!allowedProtocols.includes(value)) return;
+      safeValue = value;
+    } else if (field === "interaction") {
+      if (!allowedInteractions.includes(value)) return;
+      safeValue = value;
+    } else if (field === "description") {
+      safeValue = sanitizeText(value, MAX_EDGE_DESCRIPTION_LENGTH);
+    } else {
+      return;
+    }
 
     setEdges((currentEdges) =>
       currentEdges.map((edge) => {
@@ -476,22 +707,21 @@ function ArchitecturePage() {
           return edge;
         }
 
-        const updatedData = {
-          ...(edge.data || {}),
-          [field]: safeValue,
-        };
-
         return {
           ...edge,
-          data: updatedData,
-
+          data: {
+            ...(edge.data || {}),
+            [field]: safeValue,
+          },
           label:
             field === "protocol" || field === "interaction"
-              ? safeValue
+              ? `${field === "protocol" ? safeValue : edge.data?.protocol || "REST"} · ${field === "interaction" ? safeValue : edge.data?.interaction || "Read / Write"}`
               : edge.label,
         };
       }),
     );
+
+    setSaveMessage("");
   }
 
   // ========================================
@@ -501,18 +731,20 @@ function ArchitecturePage() {
   function deleteSelectedNode() {
     if (!selectedNodeId) return;
 
+    const nodeId = selectedNodeId;
+
     setNodes((currentNodes) =>
-      currentNodes.filter((node) => node.id !== selectedNodeId),
+      currentNodes.filter((node) => node.id !== nodeId),
     );
 
     setEdges((currentEdges) =>
       currentEdges.filter(
-        (edge) =>
-          edge.source !== selectedNodeId && edge.target !== selectedNodeId,
+        (edge) => edge.source !== nodeId && edge.target !== nodeId,
       ),
     );
 
     clearSelection();
+    setSaveMessage("");
   }
 
   // ========================================
@@ -522,11 +754,14 @@ function ArchitecturePage() {
   function deleteSelectedEdge() {
     if (!selectedEdgeId) return;
 
+    const edgeId = selectedEdgeId;
+
     setEdges((currentEdges) =>
-      currentEdges.filter((edge) => edge.id !== selectedEdgeId),
+      currentEdges.filter((edge) => edge.id !== edgeId),
     );
 
     clearSelection();
+    setSaveMessage("");
   }
 
   // ========================================
@@ -534,24 +769,47 @@ function ArchitecturePage() {
   // ========================================
 
   function handleSaveArchitecture() {
-    const invalidNode = nodes.find((node) => !node.data?.label?.trim());
+    const validationError = validateArchitecture(nodes, edges);
 
-    if (invalidNode) {
-      setSaveMessage("Every component must have a name before saving.");
+    if (validationError) {
+      setSaveMessage(validationError);
       return;
     }
 
+    const safeNodes = nodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        label: sanitizeText(node.data?.label, MAX_NODE_LABEL_LENGTH),
+      },
+    }));
+
+    const safeEdges = edges.map((edge) => ({
+      ...edge,
+      label:
+        typeof edge.label === "string"
+          ? sanitizeText(edge.label, MAX_NODE_LABEL_LENGTH)
+          : edge.label,
+      data: {
+        ...edge.data,
+        protocol: edge.data?.protocol || "REST",
+        interaction: edge.data?.interaction || "Read / Write",
+        description: sanitizeText(
+          edge.data?.description,
+          MAX_EDGE_DESCRIPTION_LENGTH,
+        ),
+      },
+    }));
+
     try {
       saveArchitecture(projectId, {
-        nodes,
-        edges,
+        nodes: safeNodes,
+        edges: safeEdges,
       });
 
+      setNodes(safeNodes);
+      setEdges(safeEdges);
       setSaveMessage("Architecture saved successfully!");
-
-      setTimeout(() => {
-        setSaveMessage("");
-      }, 3000);
     } catch (error) {
       console.error("Unable to save architecture:", error);
       setSaveMessage("Unable to save architecture.");
@@ -566,9 +824,26 @@ function ArchitecturePage() {
     try {
       const architecture = getArchitecture(projectId);
 
-      setNodes(architecture?.nodes || []);
-      setEdges(architecture?.edges || []);
+      const restoredNodes = Array.isArray(architecture?.nodes)
+        ? architecture.nodes
+        : [];
 
+      const restoredEdges = Array.isArray(architecture?.edges)
+        ? architecture.edges
+        : [];
+
+      const validationError = validateArchitecture(
+        restoredNodes,
+        restoredEdges,
+      );
+
+      if (validationError) {
+        setSaveMessage(`Cannot restore architecture: ${validationError}`);
+        return;
+      }
+
+      setNodes(restoredNodes);
+      setEdges(restoredEdges);
       clearSelection();
 
       requestAnimationFrame(() => {
@@ -587,7 +862,12 @@ function ArchitecturePage() {
   // ========================================
 
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
+
   const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId);
+
+  // ========================================
+  // LOADING STATE
+  // ========================================
 
   if (projectLoading) {
     return (
@@ -597,28 +877,36 @@ function ArchitecturePage() {
     );
   }
 
+  // ========================================
+  // PROJECT NOT FOUND
+  // ========================================
+
   if (!project) {
     return (
       <main className="architecture-page">
         <h2>Project not found</h2>
-
-        <Link to="/dashboard">Back to Dashboard</Link>
+        <Link to={`${routePrefix}/dashboard`}>Back to Dashboard</Link>
       </main>
     );
   }
 
   const requirements = project.requirements || {};
 
+  // ========================================
+  // MAIN WORKSPACE
+  // ========================================
+
   return (
     <main
       className="architecture-page"
       data-theme={localStorage.getItem("archpilot-theme") || "dark"}
     >
-      {/* TOP TOOLBAR */}
-
       <header className="architecture-topbar">
         <div className="architecture-brand">
-          <Link to="/dashboard" className="architecture-back-link">
+          <Link
+            to={`${routePrefix}/dashboard`}
+            className="architecture-back-link"
+          >
             <span>←</span> Projects
           </Link>
 
@@ -651,26 +939,25 @@ function ArchitecturePage() {
         </div>
       </header>
 
-      {/* SAVE FEEDBACK */}
-
       {saveMessage && (
-        <p className="architecture-save-message" role="status">
+        <p
+          className="architecture-save-message"
+          role="status"
+          aria-live="polite"
+        >
           {saveMessage}
         </p>
       )}
-
-      {/* PROJECT REQUIREMENTS */}
 
       <section className="requirements-strip">
         <div className="requirements-strip-heading">
           <div>
             <span className="section-eyebrow">PROJECT OVERVIEW</span>
-
             <h2>System Requirements</h2>
           </div>
 
           <Link
-            to={`/projects/${projectId}/requirements`}
+            to={`${routePrefix}/projects/${projectId}/requirements`}
             className="edit-requirements-link"
           >
             Edit requirements →
@@ -700,8 +987,6 @@ function ArchitecturePage() {
         </div>
       </section>
 
-      {/* MAIN ARCHITECTURE WORKSPACE */}
-
       <section className="architecture-workspace">
         {/* LEFT COMPONENT PALETTE */}
 
@@ -709,7 +994,6 @@ function ArchitecturePage() {
           <div className="palette-header">
             <div>
               <span className="section-eyebrow">BUILD YOUR SYSTEM</span>
-
               <h2>Components</h2>
             </div>
 
@@ -729,7 +1013,6 @@ function ArchitecturePage() {
             <section className="palette-group" key={group.title}>
               <div className="palette-group-header">
                 <h3>{group.title}</h3>
-
                 <span>{String(index + 1).padStart(2, "0")}</span>
               </div>
 
@@ -763,9 +1046,7 @@ function ArchitecturePage() {
           <div className="canvas-toolbar">
             <div>
               <span className="section-eyebrow">DESIGN AREA</span>
-
               <h2>System Architecture</h2>
-
               <p>
                 {nodes.length} components · {edges.length} connections
               </p>
@@ -796,6 +1077,9 @@ function ArchitecturePage() {
             onEdgeClick={handleEdgeClick}
             onPaneClick={clearSelection}
             onInit={setReactFlowInstance}
+            onCanvasError={handleCanvasError}
+            maxNodes={MAX_NODES}
+            maxEdges={MAX_EDGES}
           />
         </section>
 
@@ -810,8 +1094,6 @@ function ArchitecturePage() {
             <p>Inspect and configure your architecture.</p>
           </div>
 
-          {/* SELECTED COMPONENT */}
-
           {selectedNode ? (
             <div className="property-editor">
               <span className="property-type">COMPONENT</span>
@@ -821,7 +1103,7 @@ function ArchitecturePage() {
               <input
                 id="node-label"
                 type="text"
-                value={selectedNode.data.label || ""}
+                value={selectedNode.data?.label || ""}
                 maxLength={MAX_NODE_LABEL_LENGTH}
                 required
                 onChange={(event) =>
@@ -829,11 +1111,16 @@ function ArchitecturePage() {
                 }
               />
 
+              <small>
+                {(selectedNode.data?.label || "").length}/
+                {MAX_NODE_LABEL_LENGTH} characters
+              </small>
+
               <label htmlFor="node-category">Category</label>
 
               <select
                 id="node-category"
-                value={selectedNode.data.category || ""}
+                value={selectedNode.data?.category || ""}
                 onChange={(event) =>
                   updateSelectedNode("category", event.target.value)
                 }
@@ -847,7 +1134,6 @@ function ArchitecturePage() {
 
               <div className="property-id">
                 <span>Component ID</span>
-
                 <p>{selectedNode.id}</p>
               </div>
 
@@ -860,8 +1146,6 @@ function ArchitecturePage() {
               </button>
             </div>
           ) : selectedEdge ? (
-            /* SELECTED CONNECTION */
-
             <div className="property-editor">
               <span className="property-type">CONNECTION</span>
 
@@ -874,10 +1158,11 @@ function ArchitecturePage() {
                   updateSelectedEdge("protocol", event.target.value)
                 }
               >
-                <option value="REST">REST</option>
-                <option value="GraphQL">GraphQL</option>
-                <option value="gRPC">gRPC</option>
-                <option value="Async Events">Async Events</option>
+                {allowedProtocols.map((protocol) => (
+                  <option key={protocol} value={protocol}>
+                    {protocol}
+                  </option>
+                ))}
               </select>
 
               <label htmlFor="edge-interaction">Interaction</label>
@@ -889,10 +1174,11 @@ function ArchitecturePage() {
                   updateSelectedEdge("interaction", event.target.value)
                 }
               >
-                <option value="Read">Read</option>
-                <option value="Write">Write</option>
-                <option value="Read / Write">Read / Write</option>
-                <option value="Event">Event</option>
+                {allowedInteractions.map((interaction) => (
+                  <option key={interaction} value={interaction}>
+                    {interaction}
+                  </option>
+                ))}
               </select>
 
               <label htmlFor="edge-description">Description</label>
@@ -908,15 +1194,18 @@ function ArchitecturePage() {
                 placeholder="Describe this connection..."
               />
 
+              <small>
+                {(selectedEdge.data?.description || "").length}/
+                {MAX_EDGE_DESCRIPTION_LENGTH} characters
+              </small>
+
               <div className="property-id">
                 <span>Source</span>
-
                 <p>{selectedEdge.source}</p>
               </div>
 
               <div className="property-id">
                 <span>Target</span>
-
                 <p>{selectedEdge.target}</p>
               </div>
 
@@ -929,8 +1218,6 @@ function ArchitecturePage() {
               </button>
             </div>
           ) : (
-            /* NOTHING SELECTED */
-
             <div className="empty-properties">
               <div className="empty-properties-icon">⌖</div>
 

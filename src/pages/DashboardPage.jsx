@@ -1,11 +1,32 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
+const MAX_PROJECT_NAME_LENGTH = 80;
+const MAX_PROJECT_DESCRIPTION_LENGTH = 500;
+
+const ALLOWED_SCALES = [
+  "Small - Startup / MVP",
+  "Medium - Growing Business",
+  "Large - Enterprise",
+  "Global - High Traffic",
+];
+
+// Remove invisible control characters from user input.
+function sanitizeText(value) {
+  // eslint-disable-next-line no-control-regex
+  return String(value).replace(/[\u0000-\u001F\u007F]/g, "");
+}
+
+// Safely retrieve saved architecture data.
 function getArchitectureData() {
   try {
     const saved = JSON.parse(
       localStorage.getItem("archpilot-architectures") || "{}",
     );
+
+    if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
+      return { components: 0, connections: 0 };
+    }
 
     return Object.values(saved).reduce(
       (totals, architecture) => ({
@@ -23,21 +44,25 @@ function getArchitectureData() {
   }
 }
 
+// Safely retrieve saved projects.
+function getSavedProjects() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem("archpilot-projects") || "[]",
+    );
+
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+
 function DashboardPage() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("archpilot-theme") || "dark",
   );
 
-  const [projects, setProjects] = useState(() => {
-    try {
-      const saved = JSON.parse(
-        localStorage.getItem("archpilot-projects") || "[]",
-      );
-      return Array.isArray(saved) ? saved : [];
-    } catch {
-      return [];
-    }
-  });
+  const [projects, setProjects] = useState(getSavedProjects);
 
   const [architecture, setArchitecture] = useState(getArchitectureData);
   const [search, setSearch] = useState("");
@@ -50,10 +75,12 @@ function DashboardPage() {
     scale: "Small - Startup / MVP",
   });
 
+  // Save theme preference.
   useEffect(() => {
     localStorage.setItem("archpilot-theme", theme);
   }, [theme]);
 
+  // Save projects locally.
   useEffect(() => {
     localStorage.setItem("archpilot-projects", JSON.stringify(projects));
   }, [projects]);
@@ -77,31 +104,74 @@ function DashboardPage() {
     setTheme((current) => (current === "dark" ? "light" : "dark"));
   };
 
+  // Handle project form changes.
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    setFormData((previous) => ({
-      ...previous,
-      [name]: value,
-    }));
+    const allowedFields = ["name", "description", "scale"];
+
+    if (!allowedFields.includes(name)) return;
+
+    if (name === "name" || name === "description") {
+      const sanitizedValue = sanitizeText(value);
+
+      const maxLength =
+        name === "name"
+          ? MAX_PROJECT_NAME_LENGTH
+          : MAX_PROJECT_DESCRIPTION_LENGTH;
+
+      setFormData((previous) => ({
+        ...previous,
+        [name]: sanitizedValue.slice(0, maxLength),
+      }));
+    } else if (name === "scale" && ALLOWED_SCALES.includes(value)) {
+      setFormData((previous) => ({
+        ...previous,
+        scale: value,
+      }));
+    }
 
     setError("");
   };
 
+  // Create a new project after validating user input.
   const handleCreateProject = (event) => {
     event.preventDefault();
 
-    const projectName = formData.name.trim();
+    const projectName = sanitizeText(formData.name).trim();
+    const projectDescription = sanitizeText(formData.description).trim();
 
     if (!projectName) {
       setError("Please enter a project name.");
       return;
     }
 
+    if (projectName.length > MAX_PROJECT_NAME_LENGTH) {
+      setError("Project name cannot exceed 80 characters.");
+      return;
+    }
+
+    if (projectDescription.length > MAX_PROJECT_DESCRIPTION_LENGTH) {
+      setError("Description cannot exceed 500 characters.");
+      return;
+    }
+
+    if (!ALLOWED_SCALES.includes(formData.scale)) {
+      setError("Please select a valid project scale.");
+      return;
+    }
+
+    if (!window.crypto || typeof window.crypto.randomUUID !== "function") {
+      setError(
+        "Unable to create a project in this browser. Please try a supported browser.",
+      );
+      return;
+    }
+
     const newProject = {
-      id: crypto.randomUUID(),
+      id: window.crypto.randomUUID(),
       name: projectName,
-      description: formData.description.trim(),
+      description: projectDescription,
       scale: formData.scale,
       createdAt: new Date().toLocaleDateString(),
       requirements: {
@@ -131,8 +201,15 @@ function DashboardPage() {
   const closeForm = () => {
     setShowForm(false);
     setError("");
+
+    setFormData({
+      name: "",
+      description: "",
+      scale: "Small - Startup / MVP",
+    });
   };
 
+  // Calculate requirements progress.
   const completedRequirements = projects.filter((project) =>
     project.requirements?.functional?.trim(),
   ).length;
@@ -142,8 +219,9 @@ function DashboardPage() {
       ? Math.round((completedRequirements / projects.length) * 100)
       : 0;
 
+  // Filter projects using the search input.
   const filteredProjects = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = sanitizeText(search).trim().toLowerCase();
 
     if (!query) return projects;
 
@@ -232,7 +310,9 @@ function DashboardPage() {
                 type="search"
                 placeholder="Search your projects..."
                 value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                onChange={(event) =>
+                  setSearch(sanitizeText(event.target.value))
+                }
                 aria-label="Search projects"
               />
             </label>
@@ -403,6 +483,7 @@ function DashboardPage() {
                     ? "Try another search term."
                     : "Create your first project to get started."}
                 </p>
+
                 {!search && (
                   <button
                     type="button"
@@ -551,9 +632,14 @@ function DashboardPage() {
                   placeholder="e.g. E-commerce Platform"
                   value={formData.name}
                   onChange={handleChange}
-                  maxLength={80}
+                  maxLength={MAX_PROJECT_NAME_LENGTH}
+                  aria-describedby="project-form-error"
                   required
                 />
+                <small>
+                  {formData.name.length}/{MAX_PROJECT_NAME_LENGTH}
+                  characters
+                </small>
               </div>
 
               <div className="form-group">
@@ -564,9 +650,14 @@ function DashboardPage() {
                   placeholder="Describe what you want to build..."
                   value={formData.description}
                   onChange={handleChange}
-                  maxLength={500}
+                  maxLength={MAX_PROJECT_DESCRIPTION_LENGTH}
                   rows={4}
+                  aria-describedby="project-form-error"
                 />
+                <small>
+                  {formData.description.length}/{MAX_PROJECT_DESCRIPTION_LENGTH}{" "}
+                  characters
+                </small>
               </div>
 
               <div className="form-group">
@@ -577,15 +668,21 @@ function DashboardPage() {
                   value={formData.scale}
                   onChange={handleChange}
                 >
-                  <option>Small - Startup / MVP</option>
-                  <option>Medium - Growing Business</option>
-                  <option>Large - Enterprise</option>
-                  <option>Global - High Traffic</option>
+                  {ALLOWED_SCALES.map((scale) => (
+                    <option key={scale} value={scale}>
+                      {scale}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               {error && (
-                <p className="form-error" role="alert">
+                <p
+                  className="form-error"
+                  id="project-form-error"
+                  role="alert"
+                  aria-live="polite"
+                >
                   {error}
                 </p>
               )}
@@ -598,6 +695,7 @@ function DashboardPage() {
                 >
                   Cancel
                 </button>
+
                 <button type="submit" className="create-project-btn">
                   Create Project
                 </button>

@@ -6,25 +6,47 @@ import DashboardPage from "./pages/DashboardPage";
 import RequirementsPage from "./pages/RequirementsPage";
 import ArchitecturePage from "./pages/ArchitecturePage";
 
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
+
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<EntryPage />} />
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Public entry page */}
+          <Route path="/" element={<EntryPage />} />
 
-        <Route path="/dashboard" element={<DashboardPage />} />
+          {/* Temporary development routes - no authentication */}
+          <Route path="/dev/dashboard" element={<DashboardPage />} />
 
-        <Route
-          path="/projects/:projectId/requirements"
-          element={<RequirementsPage />}
-        />
+          <Route
+            path="/dev/projects/:projectId/requirements"
+            element={<RequirementsPage />}
+          />
 
-        <Route
-          path="/projects/:projectId/architecture"
-          element={<ArchitecturePage />}
-        />
-      </Routes>
-    </BrowserRouter>
+          <Route
+            path="/dev/projects/:projectId/architecture"
+            element={<ArchitecturePage />}
+          />
+
+          {/* Protected application routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+
+            <Route
+              path="/projects/:projectId/requirements"
+              element={<RequirementsPage />}
+            />
+
+            <Route
+              path="/projects/:projectId/architecture"
+              element={<ArchitecturePage />}
+            />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
+import {
+  loginWithGoogle,
+  loginWithGitHub,
+} from "../services/authService";
 function WelcomePage() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("archpilot-theme") || "light",
@@ -53,17 +56,47 @@ function WelcomePage() {
             workspace. Start with your requirements and build a system that
             makes sense.
           </p>
+<div className="welcome-actions">
+  <button
+    type="button"
+    className="welcome-start-btn welcome-google-btn"
+    onClick={loginWithGoogle}
+  >
+    <svg
+      className="auth-provider-icon"
+      viewBox="0 0 48 48"
+      aria-hidden="true"
+    >
+      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.91c-.58 2.96-2.25 5.47-4.73 7.16l7.26 5.64c4.24-3.91 7.54-9.69 7.54-17.27z" />
+      <path fill="#FBBC05" d="M10.54 28.59a14.4 14.4 0 0 1 0-9.18l-7.98-6.19a23.9 23.9 0 0 0 0 21.56l7.98-6.19z" />
+      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-6.18l-7.26-5.64c-2.02 1.36-4.6 2.16-8.65 2.16-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+    </svg>
+    Continue with Google
+    <span aria-hidden="true">→</span>
+  </button>
 
-          <div className="welcome-actions">
-            <Link to="/dashboard" className="welcome-start-btn">
-              Get Started
-              <span aria-hidden="true">→</span>
-            </Link>
+  <button
+    type="button"
+    className="welcome-start-btn welcome-github-btn"
+    onClick={loginWithGitHub}
+  >
+    <svg
+      className="auth-provider-icon github-icon"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.56.1.76-.24.76-.54v-2.08c-3.1.67-3.75-1.32-3.75-1.32-.5-1.28-1.23-1.62-1.23-1.62-1.01-.69.08-.68.08-.68 1.12.08 1.7 1.15 1.7 1.15.99 1.69 2.6 1.2 3.23.92.1-.72.39-1.2.7-1.48-2.48-.28-5.08-1.24-5.08-5.5 0-1.22.44-2.22 1.15-3-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.05 1.15a10.6 10.6 0 0 1 5.55 0c2.11-1.45 3.05-1.15 3.05-1.15.61 1.54.23 2.68.11 2.96.72.78 1.15 1.78 1.15 3.01 0 4.27-2.6 5.21-5.09 5.49.4.34.75 1.02.75 2.06v3.05c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9z" />
+    </svg>
+    Continue with GitHub
+    <span aria-hidden="true">→</span>
+  </button>
 
-            <span className="welcome-action-note">
-              Your next great system starts here.
-            </span>
-          </div>
+  <span className="welcome-action-note">
+    Your next great system starts here.
+  </span>
+</div>
 
           <div className="welcome-features">
             <div>
